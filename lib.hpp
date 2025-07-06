@@ -56,8 +56,8 @@ inline void adaptive_coord_descent(
     std::vector<double> &coefficients, std::vector<double> &inputs,
     std::vector<double> &outputs, double (*func)(double, std::vector<double>)) {
   for (double &coefficient : coefficients) {
-    double speed = 100;
-    while (speed >= 0.01) {
+    double speed = MAX_TRAINING_SPEED;
+    while (speed >= MIN_TRAINING_SPEED) {
       double least = ssqr(coefficients, inputs, outputs, func);
       while (least >= ssqr(coefficients, inputs, outputs, func)) {
         coefficient -= speed;
