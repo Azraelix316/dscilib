@@ -46,7 +46,7 @@ inline double ssqr(const std::vector<double> &coefficients,
     double diff = pred - outputs[i];
     sum += diff * diff;
   }
-  return static_cast<double>(sum);
+  return sum;
 }
 
 /*
