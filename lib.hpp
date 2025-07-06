@@ -36,15 +36,19 @@ invert(std::vector<std::vector<double>> &matrix) {
   return matrix;
 }
 
-inline double ssqr(std::vector<double> &coefficients,
-                   std::vector<double> &inputs, std::vector<double> &outputs,
-                   double (*func)(double, std::vector<double>)) {
+inline double ssqr(const std::vector<double> &coefficients,
+                   const std::vector<double> &inputs,
+                   const std::vector<double> &outputs,
+                   double (*func)(double, const std::vector<double>)) {
   long double sum = 0.0;
-  for (int i = 0; i < inputs.size(); i++) {
-    sum += pow(func(inputs[i], coefficients) - outputs[i], 2);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    double pred = func(inputs[i], coefficients);
+    double diff = pred - outputs[i];
+    sum += diff * diff;
   }
-  return sum;
+  return static_cast<double>(sum);
 }
+
 /*
  * Coordinate descent algorithm for optimization
  * Optimizes one coefficient at a time
