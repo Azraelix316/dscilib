@@ -26,6 +26,7 @@ rotate90CW(std::vector<std::vector<double>> &matrix) {
 
   return rotated;
 }
+
 inline std::vector<std::vector<double>>
 invert(std::vector<std::vector<double>> &matrix) {
   matrix = rotate90CW(matrix);
