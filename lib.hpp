@@ -56,46 +56,50 @@ inline double ssqr(const std::vector<double> &coefficients,
  * predictive function. (Note that the predictive function should only input one
  * at a time.)
  */
+inline void coord_descent(std::vector<double> &coefficients,
+                          const std::vector<double> &inputs,
+                          const std::vector<double> &outputs,
+                          double (*func)(double, std::vector<double>)) {
 
-inline void adaptive_coord_descent(
-    std::vector<double> &coefficients, std::vector<double> &inputs,
-    std::vector<double> &outputs, double (*func)(double, std::vector<double>)) {
+  constexpr double epsilon = 1e-6;
+
   for (double &coefficient : coefficients) {
+
+    coefficient += epsilon;
+    double loss_plus = ssqr(coefficients, inputs, outputs, func);
+    coefficient -= epsilon;
+    double loss_minus = ssqr(coefficients, inputs, outputs, func);
+
+    double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
     double speed = MAX_TRAINING_SPEED;
-    while (speed >= MIN_TRAINING_SPEED) {
-      double least = ssqr(coefficients, inputs, outputs, func);
-      while (least >= ssqr(coefficients, inputs, outputs, func)) {
-        coefficient -= speed;
-        least = std::min(ssqr(coefficients, inputs, outputs, func), least);
-      }
-      least = ssqr(coefficients, inputs, outputs, func);
-      while (least >= ssqr(coefficients, inputs, outputs, func)) {
-        coefficient += speed;
-        least = std::min(ssqr(coefficients, inputs, outputs, func), least);
-      }
+    double old_coefficient = coefficient;
+    coefficient -= gradient * speed;
+    while (ssqr(coefficients, inputs, outputs, func) > loss_minus &&
+           speed > MIN_TRAINING_SPEED) {
       speed *= 0.1;
+      coefficient = old_coefficient - gradient * speed;
     }
   }
 }
 
-inline void adaptive_coord_descent(std::vector<double> &coefficients,
-                                   std::vector<double> &inputs,
-                                   std::vector<double> &outputs,
-                                   double (*func)(std::vector<double>,
-                                                  std::vector<double>)) {
+inline void
+coord_descent(std::vector<double> &coefficients, std::vector<double> &inputs,
+              std::vector<double> &outputs,
+              double (*func)(std::vector<double>, std::vector<double>)) {
   coefficients.push_back(0);
 }
 
-inline void adaptive_coord_descent(
-    std::vector<double> &coefficients, std::vector<double> &inputs,
-    std::vector<double> &outputs,
-    std::vector<double> (*func)(double, std::vector<double>)) {
+inline void
+coord_descent(std::vector<double> &coefficients, std::vector<double> &inputs,
+              std::vector<double> &outputs,
+              std::vector<double> (*func)(double, std::vector<double>)) {
   coefficients.push_back(0);
 }
-inline void adaptive_coord_descent(
-    std::vector<double> &coefficients, std::vector<double> &inputs,
-    std::vector<double> &outputs,
-    std::vector<double> (*func)(std::vector<double>, std::vector<double>)) {
+inline void coord_descent(std::vector<double> &coefficients,
+                          std::vector<double> &inputs,
+                          std::vector<double> &outputs,
+                          std::vector<double> (*func)(std::vector<double>,
+                                                      std::vector<double>)) {
   coefficients.push_back(0);
 }
 
