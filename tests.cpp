@@ -35,18 +35,4 @@ int main() {
   duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start);
   std::cout << duration.count() << " ns" << std::endl;
-
-  coefficients = {0, 0};
-  data = dscilib::read_from_csv_double("tests.csv");
-  data = dscilib::rotate90CW(data);
-  for (int j = 0; j < data.size(); j++) {
-    for (int i = 0; i < data[j].size(); i++) {
-      std::cout << data[j][i] << " ";
-    }
-    std::cout << std::endl;
-  }
-  for (int i = 0; i < 10000; i++) {
-    /*dscilib::new_coord_descent(coefficients, data[0], data[1], linReg);*/
-  }
-  std::cout << coefficients[0] << "     " << coefficients[1] << "\n";
 }
