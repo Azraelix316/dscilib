@@ -9,8 +9,8 @@
 namespace dscilib {
 // Up max training speed when working with large coefficients
 // Lower min training speed for precision;
-const double MAX_TRAINING_SPEED = 100.0;
-const double MIN_TRAINING_SPEED = 0.01;
+double MAX_TRAINING_SPEED = 100.0;
+double MIN_TRAINING_SPEED = 0.001;
 
 inline std::vector<std::vector<double>>
 rotate90CW(std::vector<std::vector<double>> &matrix) {
@@ -35,20 +35,35 @@ invert(std::vector<std::vector<double>> &matrix) {
   }
   return matrix;
 }
-
-inline double ssqr(const std::vector<double> &coefficients,
-                   const std::vector<double> &inputs,
-                   const std::vector<double> &outputs,
-                   double (*func)(double, const std::vector<double>)) {
+template <typename inputType, typename func>
+inline double ssqr(std::vector<double> &coefficients,
+                   std::vector<inputType> &inputs, std::vector<double> &outputs,
+                   func function) {
   long double sum = 0.0;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    double pred = func(inputs[i], coefficients);
+    double pred = function(inputs[i], coefficients);
     double diff = pred - outputs[i];
     sum += diff * diff;
   }
   return sum;
 }
 
+template <typename coefficientType, typename inputType, typename outputType,
+          typename function>
+inline double partial_derivative(coefficientType &coefficient,
+                                 std::vector<coefficientType> &coefficients,
+                                 std::vector<inputType> inputs,
+                                 std::vector<outputType> outputs,
+                                 function func) {
+  const double epsilon = 1e-6;
+  coefficient += epsilon;
+  double loss_plus = ssqr(coefficients, inputs, outputs, func);
+  coefficient -= 2 * epsilon;
+  double loss_minus = ssqr(coefficients, inputs, outputs, func);
+  coefficient += epsilon;
+  double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
+  return gradient;
+}
 /*
  * Coordinate descent algorithm for optimization
  * Optimizes one coefficient at a time
@@ -56,53 +71,55 @@ inline double ssqr(const std::vector<double> &coefficients,
  * predictive function. (Note that the predictive function should only input one
  * at a time.)
  */
-inline void coord_descent(std::vector<double> &coefficients,
-                          const std::vector<double> &inputs,
-                          const std::vector<double> &outputs,
-                          double (*func)(double, std::vector<double>)) {
+template <typename coefficientType, typename inputType, typename outputType,
+          typename function>
+inline void coord_descent(std::vector<coefficientType> &coefficients,
+                          std::vector<inputType> &inputs,
+                          std::vector<outputType> &outputs, function func) {
 
-  constexpr double epsilon = 1e-6;
+  double epsilon = 1e-6;
 
   for (double &coefficient : coefficients) {
-
-    coefficient += epsilon;
-    double loss_plus = ssqr(coefficients, inputs, outputs, func);
-    coefficient -= epsilon;
-    double loss_minus = ssqr(coefficients, inputs, outputs, func);
-
-    double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
+    double gradient =
+        partial_derivative(coefficient, coefficients, inputs, outputs, func) /
+        (inputs.size() * inputs.size());
     double speed = MAX_TRAINING_SPEED;
+    double base_loss = ssqr(coefficients, inputs, outputs, func);
     double old_coefficient = coefficient;
     coefficient -= gradient * speed;
-    while (ssqr(coefficients, inputs, outputs, func) > loss_minus &&
-           speed > MIN_TRAINING_SPEED) {
+    while (ssqr(coefficients, inputs, outputs, func) > base_loss &&
+           speed >= MIN_TRAINING_SPEED) {
       speed *= 0.1;
+      coefficient = old_coefficient - gradient * speed;
+    }
+    if (ssqr(coefficients, inputs, outputs, func) > base_loss) {
       coefficient = old_coefficient - gradient * speed;
     }
   }
 }
 
-inline void
-coord_descent(std::vector<double> &coefficients, std::vector<double> &inputs,
-              std::vector<double> &outputs,
-              double (*func)(std::vector<double>, std::vector<double>)) {
-  coefficients.push_back(0);
+template <typename coefficientType, typename inputType, typename outputType,
+          typename function>
+inline void newton_opt(std::vector<coefficientType> &coefficients,
+                       std::vector<inputType> &inputs,
+                       std::vector<outputType> &outputs, function func) {
+  for (double &coefficient : coefficients) {
+    double derivative_estimate =
+        partial_derivative(coefficient, coefficients, inputs, outputs, func);
+    double x_1 = coefficient;
+    double y_1 = ssqr(coefficients, inputs, outputs, func);
+    double root = (derivative_estimate * x_1 - y_1) / derivative_estimate;
+    coefficient = root;
+  }
+  /*
+   * Estimate derivative
+   * Calculate derivative at the point f'(coefficient)
+   * Use point slope form to create equation y=mx-mx1+y1
+   * Substitute x1,y1
+   * Solve for x when y=0.0
+   * Change coefficient to x
+   */
 }
-
-inline void
-coord_descent(std::vector<double> &coefficients, std::vector<double> &inputs,
-              std::vector<double> &outputs,
-              std::vector<double> (*func)(double, std::vector<double>)) {
-  coefficients.push_back(0);
-}
-inline void coord_descent(std::vector<double> &coefficients,
-                          std::vector<double> &inputs,
-                          std::vector<double> &outputs,
-                          std::vector<double> (*func)(std::vector<double>,
-                                                      std::vector<double>)) {
-  coefficients.push_back(0);
-}
-
 /*
  * Data reading function from csv files
  */
