@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <ostream>
 #include <sstream>
@@ -48,22 +49,6 @@ inline double ssqr(std::vector<double> &coefficients,
   return sum;
 }
 
-template <typename coefficientType, typename inputType, typename outputType,
-          typename function>
-inline double partial_derivative(coefficientType &coefficient,
-                                 std::vector<coefficientType> &coefficients,
-                                 std::vector<inputType> inputs,
-                                 std::vector<outputType> outputs,
-                                 function func) {
-  const double epsilon = 1e-6;
-  coefficient += epsilon;
-  double loss_plus = ssqr(coefficients, inputs, outputs, func);
-  coefficient -= 2 * epsilon;
-  double loss_minus = ssqr(coefficients, inputs, outputs, func);
-  coefficient += epsilon;
-  double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
-  return gradient;
-}
 /*
  * Coordinate descent algorithm for optimization
  * Optimizes one coefficient at a time
@@ -75,14 +60,18 @@ template <typename coefficientType, typename inputType, typename outputType,
           typename function>
 inline void coord_descent(std::vector<coefficientType> &coefficients,
                           std::vector<inputType> &inputs,
-                          std::vector<outputType> &outputs, function func) {
+                          std::vector<outputType> &outputs, function &func) {
 
   double epsilon = 1e-6;
 
   for (double &coefficient : coefficients) {
-    double gradient =
-        partial_derivative(coefficient, coefficients, inputs, outputs, func) /
-        (inputs.size() * inputs.size());
+    const double epsilon = 1e-6;
+    coefficient += epsilon;
+    double loss_plus = ssqr(coefficients, inputs, outputs, func);
+    coefficient -= 2 * epsilon;
+    double loss_minus = ssqr(coefficients, inputs, outputs, func);
+    coefficient += epsilon;
+    double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
     double speed = MAX_TRAINING_SPEED;
     double base_loss = ssqr(coefficients, inputs, outputs, func);
     double old_coefficient = coefficient;
@@ -100,12 +89,17 @@ inline void coord_descent(std::vector<coefficientType> &coefficients,
 
 template <typename coefficientType, typename inputType, typename outputType,
           typename function>
-inline void newton_opt(std::vector<coefficientType> &coefficients,
-                       std::vector<inputType> &inputs,
-                       std::vector<outputType> &outputs, function func) {
+inline void single_newton_opt(std::vector<coefficientType> &coefficients,
+                              std::vector<inputType> &inputs,
+                              std::vector<outputType> &outputs, function func) {
   for (double &coefficient : coefficients) {
-    double derivative_estimate =
-        partial_derivative(coefficient, coefficients, inputs, outputs, func);
+    const double epsilon = 1e-6;
+    coefficient += epsilon;
+    double loss_plus = ssqr(coefficients, inputs, outputs, func);
+    coefficient -= 2 * epsilon;
+    double loss_minus = ssqr(coefficients, inputs, outputs, func);
+    coefficient += epsilon;
+    double derivative_estimate = (loss_plus - loss_minus) / (2.0 * epsilon);
     double x_1 = coefficient;
     double y_1 = ssqr(coefficients, inputs, outputs, func);
     double root = (derivative_estimate * x_1 - y_1) / derivative_estimate;
