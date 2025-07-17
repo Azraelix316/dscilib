@@ -13,7 +13,7 @@ const double MAX_TRAINING_SPEED = 100.0;
 const double MIN_TRAINING_SPEED = 0.01;
 
 inline std::vector<std::vector<double>>
-rotate90CW(std::vector<std::vector<double>> &matrix) {
+rotate90CW(std::vector<std::vector<double>> matrix) {
   size_t rows = matrix.size();
   if (rows == 0)
     return {};
@@ -28,12 +28,17 @@ rotate90CW(std::vector<std::vector<double>> &matrix) {
 }
 
 inline std::vector<std::vector<double>>
-invert(std::vector<std::vector<double>> &matrix) {
-  matrix = rotate90CW(matrix);
-  for (std::vector<double> row : matrix) {
-    std::reverse(row.begin(), row.end());
-  }
-  return matrix;
+transpose(std::vector<std::vector<double>> matrix) {
+  size_t rows = matrix.size();
+  if (rows == 0)
+    return {};
+  size_t cols = matrix[0].size();
+  std::vector<std::vector<double>> tranposed_matrix(cols,
+                                                    std::vector<double>(rows));
+  for (size_t i = 0; i < rows; ++i)
+    for (size_t j = 0; j < cols; ++j)
+      tranposed_matrix[j][i] = matrix[i][j];
+  return tranposed_matrix;
 }
 
 inline double ssqr(const std::vector<double> &coefficients,
