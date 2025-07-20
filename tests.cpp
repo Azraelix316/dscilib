@@ -19,11 +19,19 @@ int main() {
                                            static_cast<double>(rand())};
   coefficients = initial_coefficients;
   data = dscilib::read_from_csv_double("tests.csv");
-  data = dscilib::rotate90CW(data);
+  data = dscilib::transpose(data);
   auto start = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < 10000; i++) {
     /*dscilib::coord_descent(coefficients, data[0], data[1], linReg);*/
   }
+  std::vector<std::vector<double>> batched = dscilib::batch(data, 2);
+  for (std::vector<double> batch : batched) {
+    for (double batc : batch) {
+      std::cout << batc << " ";
+    }
+    std::cout << std::endl;
+  }
+
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start);
   coefficients = initial_coefficients;

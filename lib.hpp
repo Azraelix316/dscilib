@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <ostream>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -39,6 +40,16 @@ transpose(std::vector<std::vector<double>> matrix) {
     for (size_t j = 0; j < cols; ++j)
       tranposed_matrix[j][i] = matrix[i][j];
   return tranposed_matrix;
+}
+
+template <typename type>
+inline std::vector<type> batch(std::vector<type> matrix,
+                               const double sampleSize) {
+  std::random_device rd;
+  std::mt19937 g(rd());
+  std::shuffle(matrix.begin(), matrix.end(), g);
+  std::vector<type> newMatrix(matrix.begin(), matrix.begin() + sampleSize);
+  return newMatrix;
 }
 
 inline double ssqr(const std::vector<double> &coefficients,
