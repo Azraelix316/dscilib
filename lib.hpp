@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <ostream>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -13,7 +14,7 @@ const double MAX_TRAINING_SPEED = 100.0;
 const double MIN_TRAINING_SPEED = 0.01;
 
 inline std::vector<std::vector<double>>
-rotate90CW(std::vector<std::vector<double>> &matrix) {
+rotate90CW(std::vector<std::vector<double>> matrix) {
   size_t rows = matrix.size();
   if (rows == 0)
     return {};
@@ -26,24 +27,44 @@ rotate90CW(std::vector<std::vector<double>> &matrix) {
 
   return rotated;
 }
+
 inline std::vector<std::vector<double>>
-invert(std::vector<std::vector<double>> &matrix) {
-  matrix = rotate90CW(matrix);
-  for (std::vector<double> row : matrix) {
-    std::reverse(row.begin(), row.end());
-  }
-  return matrix;
+transpose(std::vector<std::vector<double>> matrix) {
+  size_t rows = matrix.size();
+  if (rows == 0)
+    return {};
+  size_t cols = matrix[0].size();
+  std::vector<std::vector<double>> tranposed_matrix(cols,
+                                                    std::vector<double>(rows));
+  for (size_t i = 0; i < rows; ++i)
+    for (size_t j = 0; j < cols; ++j)
+      tranposed_matrix[j][i] = matrix[i][j];
+  return tranposed_matrix;
 }
 
-inline double ssqr(std::vector<double> &coefficients,
-                   std::vector<double> &inputs, std::vector<double> &outputs,
-                   double (*func)(double, std::vector<double>)) {
+template <typename type>
+inline std::vector<type> batch(std::vector<type> matrix,
+                               const double sampleSize) {
+  std::random_device rd;
+  std::mt19937 g(rd());
+  std::shuffle(matrix.begin(), matrix.end(), g);
+  std::vector<type> newMatrix(matrix.begin(), matrix.begin() + sampleSize);
+  return newMatrix;
+}
+
+inline double ssqr(const std::vector<double> &coefficients,
+                   const std::vector<double> &inputs,
+                   const std::vector<double> &outputs,
+                   double (*func)(double, const std::vector<double>)) {
   long double sum = 0.0;
-  for (int i = 0; i < inputs.size(); i++) {
-    sum += pow(func(inputs[i], coefficients) - outputs[i], 2);
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    double pred = func(inputs[i], coefficients);
+    double diff = pred - outputs[i];
+    sum += diff * diff;
   }
   return sum;
 }
+
 /*
  * Coordinate descent algorithm for optimization
  * Optimizes one coefficient at a time
@@ -51,46 +72,50 @@ inline double ssqr(std::vector<double> &coefficients,
  * predictive function. (Note that the predictive function should only input one
  * at a time.)
  */
+inline void coord_descent(std::vector<double> &coefficients,
+                          const std::vector<double> &inputs,
+                          const std::vector<double> &outputs,
+                          double (*func)(double, std::vector<double>)) {
 
-inline void adaptive_coord_descent(
-    std::vector<double> &coefficients, std::vector<double> &inputs,
-    std::vector<double> &outputs, double (*func)(double, std::vector<double>)) {
+  constexpr double epsilon = 1e-6;
+
   for (double &coefficient : coefficients) {
+
+    coefficient += epsilon;
+    double loss_plus = ssqr(coefficients, inputs, outputs, func);
+    coefficient -= epsilon;
+    double loss_minus = ssqr(coefficients, inputs, outputs, func);
+
+    double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
     double speed = MAX_TRAINING_SPEED;
-    while (speed >= MIN_TRAINING_SPEED) {
-      double least = ssqr(coefficients, inputs, outputs, func);
-      while (least >= ssqr(coefficients, inputs, outputs, func)) {
-        coefficient -= speed;
-        least = std::min(ssqr(coefficients, inputs, outputs, func), least);
-      }
-      least = ssqr(coefficients, inputs, outputs, func);
-      while (least >= ssqr(coefficients, inputs, outputs, func)) {
-        coefficient += speed;
-        least = std::min(ssqr(coefficients, inputs, outputs, func), least);
-      }
+    double old_coefficient = coefficient;
+    coefficient -= gradient * speed;
+    while (ssqr(coefficients, inputs, outputs, func) > loss_minus &&
+           speed > MIN_TRAINING_SPEED) {
       speed *= 0.1;
+      coefficient = old_coefficient - gradient * speed;
     }
   }
 }
 
-inline void adaptive_coord_descent(std::vector<double> &coefficients,
-                                   std::vector<double> &inputs,
-                                   std::vector<double> &outputs,
-                                   double (*func)(std::vector<double>,
-                                                  std::vector<double>)) {
+inline void
+coord_descent(std::vector<double> &coefficients, std::vector<double> &inputs,
+              std::vector<double> &outputs,
+              double (*func)(std::vector<double>, std::vector<double>)) {
   coefficients.push_back(0);
 }
 
-inline void adaptive_coord_descent(
-    std::vector<double> &coefficients, std::vector<double> &inputs,
-    std::vector<double> &outputs,
-    std::vector<double> (*func)(double, std::vector<double>)) {
+inline void
+coord_descent(std::vector<double> &coefficients, std::vector<double> &inputs,
+              std::vector<double> &outputs,
+              std::vector<double> (*func)(double, std::vector<double>)) {
   coefficients.push_back(0);
 }
-inline void adaptive_coord_descent(
-    std::vector<double> &coefficients, std::vector<double> &inputs,
-    std::vector<double> &outputs,
-    std::vector<double> (*func)(std::vector<double>, std::vector<double>)) {
+inline void coord_descent(std::vector<double> &coefficients,
+                          std::vector<double> &inputs,
+                          std::vector<double> &outputs,
+                          std::vector<double> (*func)(std::vector<double>,
+                                                      std::vector<double>)) {
   coefficients.push_back(0);
 }
 
