@@ -31,6 +31,7 @@ int main() {
     }
     std::cout << std::endl;
   }
+
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start);
   coefficients = initial_coefficients;

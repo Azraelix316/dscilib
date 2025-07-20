@@ -51,6 +51,7 @@ inline std::vector<type> batch(std::vector<type> matrix,
   std::vector<type> newMatrix(matrix.begin(), matrix.begin() + sampleSize);
   return newMatrix;
 }
+
 inline double ssqr(const std::vector<double> &coefficients,
                    const std::vector<double> &inputs,
                    const std::vector<double> &outputs,
