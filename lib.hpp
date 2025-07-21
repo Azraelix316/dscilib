@@ -4,6 +4,7 @@
 #include <functional>
 #include <iostream>
 #include <ostream>
+#include <random>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -23,7 +24,7 @@ double sum_squared_error(std::vector<double>& coefficients,
 std::vector<std::vector<double>> rotate_90_cw(std::vector<std::vector<double>>& matrix);
 
 // Inverts a matrix by rotating and reversing rows.
-std::vector<std::vector<double>> invert_matrix(std::vector<std::vector<double>>& matrix);
+std::vector<std::vector<double>> transpose_matrix(std::vector<std::vector<double>>& matrix);
 
 // Estimates the partial derivative of a function with respect to a variable.
 template <typename FuncType, typename ArgsType>
@@ -48,6 +49,8 @@ std::vector<std::vector<double>> read_csv_double(std::string file_name);
 
 // ---- Internal Implementation Wrappers ----
 namespace detail {
+// Up max training speed when working with large coefficients
+// Lower min training speed for precision
 double MAX_TRAINING_SPEED = 100.0;
 double MIN_TRAINING_SPEED = 0.001;
 
@@ -79,13 +82,28 @@ inline std::vector<std::vector<double>> rotate_90_cw(std::vector<std::vector<dou
     return rotated;
 }
 
-// Inverts a matrix by rotating and reversing rows.
-inline std::vector<std::vector<double>> invert_matrix(std::vector<std::vector<double>>& matrix) {
-    matrix = rotate_90_cw(matrix);
-    for (std::vector<double> row : matrix) {
-        std::reverse(row.begin(), row.end());
-    }
-    return matrix;
+inline std::vector<std::vector<double>>
+transpose_matrix(std::vector<std::vector<double>> matrix) {
+  size_t rows = matrix.size();
+  if (rows == 0)
+    return {};
+  size_t cols = matrix[0].size();
+  std::vector<std::vector<double>> tranposed_matrix(cols,
+                                                    std::vector<double>(rows));
+  for (size_t i = 0; i < rows; ++i)
+    for (size_t j = 0; j < cols; ++j)
+      tranposed_matrix[j][i] = matrix[i][j];
+  return tranposed_matrix;
+}
+
+template <typename type>
+inline std::vector<type> batch(std::vector<type> matrix,
+                               const double sampleSize) {
+  std::random_device rd;
+  std::mt19937 g(rd());
+  std::shuffle(matrix.begin(), matrix.end(), g);
+  std::vector<type> newMatrix(matrix.begin(), matrix.begin() + sampleSize);
+  return newMatrix;
 }
 
 // Calculates sum of squared errors for a given model and dataset.
