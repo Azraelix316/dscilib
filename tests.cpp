@@ -33,7 +33,7 @@ double quadratic(double input) {
 int main() {
   std::vector<std::vector<double>> data =
       dscilib::read_csv_double("tests.csv");
-  data = dscilib::invert_matrix(data);
+  data = dscilib::transpose_matrix(data);
   std::vector<double> coefficients{0, 0};
   /*for (int i = 0; i < data.size(); i++) {*/
   /*  inputs.push_back({data[i][0], data[i][1]});*/
