@@ -86,25 +86,25 @@ inline void coord_descent(std::vector<coefficientType> &coefficients,
     }
   }
 }
+template <typename functionType, typename argsType>
+inline double pde(functionType function, double &wrt, argsType &args) {
+  constexpr double epsilon = 1e-6;
+  wrt += epsilon;
+  double loss_plus = function(args);
+  wrt -= 2 * epsilon;
+  double loss_minus = function(args);
+  wrt += epsilon;
+  return (loss_plus - loss_minus) / (2.0 * epsilon);
+}
 
-template <typename coefficientType, typename inputType, typename outputType,
-          typename function>
-inline void single_newton_opt(std::vector<coefficientType> &coefficients,
-                              std::vector<inputType> &inputs,
-                              std::vector<outputType> &outputs, function func) {
-  for (double &coefficient : coefficients) {
-    const double epsilon = 1e-6;
-    coefficient += epsilon;
-    double loss_plus = ssqr(coefficients, inputs, outputs, func);
-    coefficient -= 2 * epsilon;
-    double loss_minus = ssqr(coefficients, inputs, outputs, func);
-    coefficient += epsilon;
-    double derivative_estimate = (loss_plus - loss_minus) / (2.0 * epsilon);
-    double x_1 = coefficient;
-    double y_1 = ssqr(coefficients, inputs, outputs, func);
-    double root = (derivative_estimate * x_1 - y_1) / derivative_estimate;
-    coefficient = root;
-  }
+template <typename functionType>
+inline double single_newton(double &input, functionType function) {
+  double derivative_estimate = pde(function, input, input);
+  double x_1 = input;
+  double y_1 = function(input);
+  double root = (derivative_estimate * x_1 - y_1) / derivative_estimate;
+  input = root;
+
   /*
    * Estimate derivative
    * Calculate derivative at the point f'(coefficient)
@@ -113,6 +113,7 @@ inline void single_newton_opt(std::vector<coefficientType> &coefficients,
    * Solve for x when y=0.0
    * Change coefficient to x
    */
+  return input;
 }
 /*
  * Data reading function from csv files
