@@ -21,10 +21,10 @@ double sum_squared_error(std::vector<double>& coefficients,
                         FuncType function);
 
 // Rotates a matrix 90 degrees clockwise.
-std::vector<std::vector<double>> rotate_90_cw(std::vector<std::vector<double>>& matrix);
+std::vector<std::vector<double>> rotate_90_cw(std::vector<std::vector<double>> matrix);
 
 // Inverts a matrix by rotating and reversing rows.
-std::vector<std::vector<double>> transpose_matrix(std::vector<std::vector<double>>& matrix);
+std::vector<std::vector<double>> transpose_matrix(std::vector<std::vector<double>>matrix);
 
 // Estimates the partial derivative of a function with respect to a variable.
 template <typename FuncType, typename ArgsType>
@@ -68,7 +68,7 @@ struct SumSquaredErrorWrapper {
 } // namespace detail
 
 // Rotates a matrix 90 degrees clockwise.
-inline std::vector<std::vector<double>> rotate_90_cw(std::vector<std::vector<double>>& matrix) {
+inline std::vector<std::vector<double>> rotate_90_cw(std::vector<std::vector<double>> matrix) {
     size_t rows = matrix.size();
     if (rows == 0)
         return {};
