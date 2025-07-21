@@ -27,8 +27,14 @@
 double linReg(double input, std::vector<double> coefficients) {
   return coefficients[0] * input + coefficients[1];
 }
-double quadratic(double input) { return input * input * input - 3; }
+double quadratic(double input) {
+  return input * input * input - 3 * input + 2 * input * input;
+}
 int main() {
+  std::vector<std::vector<double>> data =
+      dscilib::read_from_csv_double("tests.csv");
+  data = dscilib::invert(data);
+  std::vector<double> coefficients{0, 0};
   /*for (int i = 0; i < data.size(); i++) {*/
   /*  inputs.push_back({data[i][0], data[i][1]});*/
   /*}*/
@@ -36,9 +42,8 @@ int main() {
   /*for (int i = 0; i < data.size(); i++) {*/
   /*  outputs.push_back(data[i][2]);*/
   /*}*/
-  double x = -3.0;
   for (int i = 0; i < 100; i++) {
-    dscilib::single_newton(x, quadratic);
+    dscilib::coord_descent(coefficients, data[0], data[1], linReg);
   }
-  std::cout << x;
+  std::cout << coefficients[0] << "  " << coefficients[1];
 }

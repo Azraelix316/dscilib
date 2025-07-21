@@ -8,10 +8,29 @@
 #include <string>
 #include <vector>
 namespace dscilib {
+
+template <typename inputType, typename func>
+inline double ssqr(std::vector<double> &coefficients,
+                   std::vector<inputType> &inputs, std::vector<double> &outputs,
+                   func function);
+// these are implementation wrappers and variables, DO NOT USE!
+namespace detail {
 // Up max training speed when working with large coefficients
 // Lower min training speed for precision;
 double MAX_TRAINING_SPEED = 100.0;
 double MIN_TRAINING_SPEED = 0.001;
+template <typename coefficientType, typename inputType, typename outputType,
+          typename functionType>
+struct SSQRWrapper {
+  std::vector<coefficientType> coefficients;
+  std::vector<inputType> inputs;
+  std::vector<outputType> outputs;
+  functionType &function;
+  double operator()(std::vector<coefficientType> coeffs) {
+    return ssqr(coeffs, inputs, outputs, function);
+  }
+};
+} // namespace detail
 
 inline std::vector<std::vector<double>>
 rotate90CW(std::vector<std::vector<double>> &matrix) {
@@ -48,13 +67,22 @@ inline double ssqr(std::vector<double> &coefficients,
   }
   return sum;
 }
-
+template <typename functionType, typename argsType>
+inline double pde(functionType function, double &wrt, argsType &args) {
+  constexpr double epsilon = 1e-6;
+  wrt += epsilon;
+  double loss_plus = function(args);
+  wrt -= 2 * epsilon;
+  double loss_minus = function(args);
+  wrt += epsilon;
+  return (loss_plus - loss_minus) / (2.0 * epsilon);
+}
 /*
  * Coordinate descent algorithm for optimization
  * Optimizes one coefficient at a time
  * Input in the coefficients to modify, the test inputs and outputs, and the
- * predictive function. (Note that the predictive function should only input one
- * at a time.)
+ * predictive function. (Note that the predictive function should only input
+ * one at a time.)
  */
 template <typename coefficientType, typename inputType, typename outputType,
           typename function>
@@ -65,19 +93,15 @@ inline void coord_descent(std::vector<coefficientType> &coefficients,
   double epsilon = 1e-6;
 
   for (double &coefficient : coefficients) {
-    const double epsilon = 1e-6;
-    coefficient += epsilon;
-    double loss_plus = ssqr(coefficients, inputs, outputs, func);
-    coefficient -= 2 * epsilon;
-    double loss_minus = ssqr(coefficients, inputs, outputs, func);
-    coefficient += epsilon;
-    double gradient = (loss_plus - loss_minus) / (2.0 * epsilon);
-    double speed = MAX_TRAINING_SPEED;
+    detail::SSQRWrapper<coefficientType, inputType, outputType, function>
+        loss_func{coefficients, inputs, outputs, func};
+    double gradient = pde(loss_func, coefficient, coefficients);
+    double speed = detail::MAX_TRAINING_SPEED;
     double base_loss = ssqr(coefficients, inputs, outputs, func);
     double old_coefficient = coefficient;
     coefficient -= gradient * speed;
     while (ssqr(coefficients, inputs, outputs, func) > base_loss &&
-           speed >= MIN_TRAINING_SPEED) {
+           speed >= detail::MIN_TRAINING_SPEED) {
       speed *= 0.1;
       coefficient = old_coefficient - gradient * speed;
     }
@@ -85,16 +109,6 @@ inline void coord_descent(std::vector<coefficientType> &coefficients,
       coefficient = old_coefficient - gradient * speed;
     }
   }
-}
-template <typename functionType, typename argsType>
-inline double pde(functionType function, double &wrt, argsType &args) {
-  constexpr double epsilon = 1e-6;
-  wrt += epsilon;
-  double loss_plus = function(args);
-  wrt -= 2 * epsilon;
-  double loss_minus = function(args);
-  wrt += epsilon;
-  return (loss_plus - loss_minus) / (2.0 * epsilon);
 }
 
 template <typename functionType>
