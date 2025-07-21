@@ -32,8 +32,8 @@ double quadratic(double input) {
 }
 int main() {
   std::vector<std::vector<double>> data =
-      dscilib::read_from_csv_double("tests.csv");
-  data = dscilib::invert(data);
+      dscilib::read_csv_double("tests.csv");
+  data = dscilib::invert_matrix(data);
   std::vector<double> coefficients{0, 0};
   /*for (int i = 0; i < data.size(); i++) {*/
   /*  inputs.push_back({data[i][0], data[i][1]});*/
@@ -43,7 +43,12 @@ int main() {
   /*  outputs.push_back(data[i][2]);*/
   /*}*/
   for (int i = 0; i < 100; i++) {
-    dscilib::coord_descent(coefficients, data[0], data[1], linReg);
+    dscilib::coordinate_descent(coefficients, data[0], data[1], linReg);
   }
+  double x=30.0;
+  for (int i=0;i<10;i++) {
+    dscilib::newton_root(x, quadratic);
+  }
+  std::cout << "Root found: " << x << std::endl;
   std::cout << coefficients[0] << "  " << coefficients[1];
 }
