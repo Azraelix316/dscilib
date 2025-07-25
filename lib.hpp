@@ -211,7 +211,24 @@ matrix_mult(const std::vector<std::vector<double>> &m1,
   }
   return newMatrix;
 }
-
+inline double L2_Norm(std::vector<double> vector) {
+  double norm = 0;
+  for (const double &element : vector) {
+    norm += element * element;
+  }
+  return sqrt(norm);
+}
+inline std::vector<double>
+power_iteration(std::vector<std::vector<double>> matrix,
+                std::vector<double> guess) {
+  std::vector<double> newGuess =
+      transpose_matrix(matrix_mult(matrix, transpose_matrix({guess})))[0];
+  double inverseNorm = 1.0 / L2_Norm(newGuess);
+  for (int i = 0; i < newGuess.size(); i++) {
+    newGuess[i] *= inverseNorm;
+  }
+  return newGuess;
+}
 inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
     const double &n_principle_components) {

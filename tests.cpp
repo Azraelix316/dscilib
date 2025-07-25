@@ -32,13 +32,18 @@ double quadratic(double input) {
 }
 int main() {
 
-  std::vector<std::vector<double>> m1{{1, 1, 3}, {2, 3, 3}, {3, 3, 3}};
-  std::vector<std::vector<double>> m2{{3, 3, 2}, {4, 4, 2}};
-  std::vector<std::vector<double>> data = dscilib::matrix_mult(m1, m2);
-  for (std::vector<double> row : data) {
-    for (double ele : row) {
+  std::vector<std::vector<double>> m1{{3, 2}, {2, 1}};
+  std::vector<double> eigenvector{1, 1};
+  for (int i = 0; i < 10; i++) {
+    eigenvector = dscilib::power_iteration(m1, eigenvector);
+
+    for (double ele : eigenvector) {
       std::cout << ele << "  ";
     }
     std::cout << std::endl;
   }
+  for (double ele : eigenvector) {
+    std::cout << ele << "  ";
+  }
+  std::cout << std::endl;
 }
