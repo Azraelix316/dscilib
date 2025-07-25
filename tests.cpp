@@ -32,18 +32,8 @@ double quadratic(double input) {
 }
 int main() {
 
-  std::vector<std::vector<double>> m1{{3, 2}, {2, 1}};
-  std::vector<double> eigenvector{1, 1};
-  for (int i = 0; i < 10; i++) {
-    eigenvector = dscilib::power_iteration(m1, eigenvector);
-
-    for (double ele : eigenvector) {
-      std::cout << ele << "  ";
-    }
-    std::cout << std::endl;
-  }
-  for (double ele : eigenvector) {
-    std::cout << ele << "  ";
-  }
-  std::cout << std::endl;
+  std::vector<std::vector<double>> m1{
+      {2.5, 2.4}, {0.5, 0.7}, {2.2, 2.9}, {1.9, 2.2}, {3.1, 3}};
+  std::vector<double> PC1 = dscilib::PCA(m1, 1)[0];
+  std::cout << PC1[0] << "  " << PC1[1] << std::endl;
 }

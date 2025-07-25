@@ -232,12 +232,52 @@ power_iteration(std::vector<std::vector<double>> matrix,
 inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
     const double &n_principle_components) {
+  // Center data
+  std::vector<std::vector<double>> centered_data = transpose_matrix(dataset);
+  for (int i = 0; i < centered_data.size(); i++) {
+    double mean = 0.0;
+    for (int j = 0; j < centered_data[i].size(); j++) {
+      mean += centered_data[i][j] / centered_data[i].size();
+    }
+    for (int j = 0; j < centered_data[i].size(); j++) {
+      centered_data[i][j] -= mean;
+    }
+  }
+
+  for (std::vector<double> row : centered_data) {
+    for (double ele : row) {
+      std::cout << ele << "  ";
+    }
+    std::cout << std::endl;
+  }
+  // flipped transpose operation because of centering strat
+  std::vector<std::vector<double>> covariance_matrix =
+      matrix_mult(centered_data, transpose_matrix(centered_data));
+  for (std::vector<double> row : covariance_matrix) {
+    for (double ele : row) {
+      ele *= 1.0 / (centered_data[0].size() - 1);
+      std::cout << ele << "  ";
+    }
+    std::cout << std::endl;
+  }
+  // Calculate the covariance matrix
   /*
    *Search for greatest eigenvalues to get greatest eigenvectors of the matrix
    * dataset transpose* dataset
    * Each eigenvalue corresponds to one principle component
    */
-  return {{}};
+  std::vector<std::vector<double>> principle_components;
+  for (int i = 0; i < n_principle_components; i++) {
+    std::vector<double> guess(covariance_matrix.size(), 1);
+    for (int i = 0; i < 10; i++) {
+      guess = power_iteration(covariance_matrix, {guess});
+      std::cout << guess[0] << " " << guess[1] << std::endl;
+    }
+    principle_components.push_back(guess);
+    // deflate data eventually
+  }
+
+  return principle_components;
 }
 
 // Reads a CSV file into a 2D vector of strings.
