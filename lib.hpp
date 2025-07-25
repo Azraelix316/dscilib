@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <fstream>
 #include <functional>
@@ -6,6 +7,7 @@
 #include <ostream>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -42,6 +44,10 @@ void coordinate_descent(std::vector<CoefficientType> &coefficients,
 template <typename FuncType>
 double newton_root(double &input, FuncType function);
 
+// multiplies an mxn matrix and a nxp matrix.
+std::vector<std::vector<double>>
+matrix_mult(const std::vector<std::vector<double>> &m1,
+            const std::vector<std::vector<double>> &m2);
 // Finds principle components of a 2D dataset
 std::vector<std::vector<double>>
 principle_component_analysis(std::vector<std::vector<double>> dataset,
@@ -179,6 +185,31 @@ inline double newton_root(double &input, FuncType function) {
   double root = (derivative_estimate * x_1 - y_1) / derivative_estimate;
   input = root;
   return input;
+}
+inline std::vector<std::vector<double>>
+matrix_mult(const std::vector<std::vector<double>> &m1,
+            const std::vector<std::vector<double>> &m2) {
+  size_t n = m1[0].size();
+  // also equal to m2.size();
+  size_t m = m1.size();
+  size_t p = m2[0].size();
+  std::vector<std::vector<double>> newMatrix(m, std::vector<double>(p, 0.0));
+  if (m1[0].size() != m2.size()) {
+    throw std::invalid_argument(
+        "Incompatible matrix dimensions: the columns of matrix 1 are not equal "
+        "to the rows of matrix 2");
+  }
+  // m1[0].size() is the number of columns in the first matrix
+  // m2.size() is the number of rows in the second matrix
+  // newMatrix[i][j]=all elements in one row of m1 * all elements in the column
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < p; j++) {
+      for (int k = 0; k < n; k++) {
+        newMatrix[i][j] += m1[i][k] * m2[k][j];
+      }
+    }
+  }
+  return newMatrix;
 }
 
 inline std::vector<std::vector<double>>
