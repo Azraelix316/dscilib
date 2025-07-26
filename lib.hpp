@@ -48,10 +48,20 @@ double newton_root(double &input, FuncType function);
 std::vector<std::vector<double>>
 matrix_mult(const std::vector<std::vector<double>> &m1,
             const std::vector<std::vector<double>> &m2);
+
+// iterates and gets closer to the eigenvector with the largest eigenvector
+std::vector<double>
+power_iteration(const std::vector<std::vector<double>> &matrix,
+                const std::vector<double> &guess);
+
+// calculates the eigenvalue of a matrix and it's eigenvector
+double eigenvalue(const std::vector<std::vector<double>> &matrix,
+                  const std::vector<double> &eigenvector);
+double L2_Norm(const std::vector<double> &vector);
 // Finds principle components of a 2D dataset
 std::vector<std::vector<double>>
-principle_component_analysis(std::vector<std::vector<double>> dataset,
-                             const double n_principle_components);
+PCA(const std::vector<std::vector<double>> &dataset,
+    const double &n_principle_components);
 
 // Reads a CSV file into a 2D vector of strings.
 std::vector<std::vector<std::string>> read_csv_string(std::string file_name);
@@ -211,7 +221,7 @@ matrix_mult(const std::vector<std::vector<double>> &m1,
   }
   return newMatrix;
 }
-inline double L2_Norm(std::vector<double> vector) {
+inline double L2_Norm(const std::vector<double> &vector) {
   double norm = 0;
   for (const double &element : vector) {
     norm += element * element;
@@ -219,8 +229,8 @@ inline double L2_Norm(std::vector<double> vector) {
   return sqrt(norm);
 }
 inline std::vector<double>
-power_iteration(std::vector<std::vector<double>> matrix,
-                std::vector<double> guess) {
+power_iteration(const std::vector<std::vector<double>> &matrix,
+                const std::vector<double> &guess) {
   std::vector<double> newGuess =
       transpose_matrix(matrix_mult(matrix, transpose_matrix({guess})))[0];
   double inverseNorm = 1.0 / L2_Norm(newGuess);
@@ -230,8 +240,8 @@ power_iteration(std::vector<std::vector<double>> matrix,
   return newGuess;
 }
 
-inline double eigenvalue(std::vector<std::vector<double>> matrix,
-                         std::vector<double> eigenvector) {
+inline double eigenvalue(const std::vector<std::vector<double>> &matrix,
+                         const std::vector<double> &eigenvector) {
   double vTv =
       matrix_mult({eigenvector}, transpose_matrix({eigenvector}))[0][0];
   return matrix_mult(
@@ -240,7 +250,7 @@ inline double eigenvalue(std::vector<std::vector<double>> matrix,
          vTv;
 }
 inline std::vector<std::vector<double>>
-PCA(std::vector<std::vector<double>> dataset,
+PCA(const std::vector<std::vector<double>> &dataset,
     const double &n_principle_components) {
   // Center data
   std::vector<std::vector<double>> centered_data = transpose_matrix(dataset);
