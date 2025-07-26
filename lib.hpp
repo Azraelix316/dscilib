@@ -229,6 +229,24 @@ power_iteration(std::vector<std::vector<double>> matrix,
   }
   return newGuess;
 }
+
+inline double eigenvalue(std::vector<std::vector<double>> matrix,
+                         std::vector<double> eigenvector) {
+  double vTv =
+      matrix_mult({eigenvector}, transpose_matrix({eigenvector}))[0][0];
+  std::cout << vTv << std::endl;
+  std::vector<std::vector<double>> Av = matrix_mult(
+      {eigenvector}, matrix_mult(matrix, transpose_matrix({eigenvector})));
+  for (std::vector<double> row : Av) {
+    for (double ele : row) {
+      std::cout << ele << "  ";
+    }
+    std::cout << std::endl;
+  }
+  return matrix_mult(
+      {eigenvector},
+      matrix_mult(matrix, transpose_matrix({eigenvector})))[0][0];
+}
 inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
     const double &n_principle_components) {
@@ -253,13 +271,12 @@ PCA(std::vector<std::vector<double>> dataset,
   // flipped transpose operation because of centering strat
   std::vector<std::vector<double>> covariance_matrix =
       matrix_mult(centered_data, transpose_matrix(centered_data));
-  for (std::vector<double> row : covariance_matrix) {
-    for (double ele : row) {
-      ele *= 1.0 / (centered_data[0].size() - 1);
-      std::cout << ele << "  ";
+  for (int i = 0; i < covariance_matrix.size(); i++) {
+    for (int j = 0; j < covariance_matrix.size(); j++) {
+      covariance_matrix[i][j] *= 1.0 / (centered_data[0].size() - 1);
     }
-    std::cout << std::endl;
   }
+
   // Calculate the covariance matrix
   /*
    *Search for greatest eigenvalues to get greatest eigenvectors of the matrix
@@ -275,6 +292,7 @@ PCA(std::vector<std::vector<double>> dataset,
     }
     principle_components.push_back(guess);
     // deflate data eventually
+    std::cout << (eigenvalue(covariance_matrix, guess));
   }
 
   return principle_components;
