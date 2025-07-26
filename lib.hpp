@@ -234,18 +234,10 @@ inline double eigenvalue(std::vector<std::vector<double>> matrix,
                          std::vector<double> eigenvector) {
   double vTv =
       matrix_mult({eigenvector}, transpose_matrix({eigenvector}))[0][0];
-  std::cout << vTv << std::endl;
-  std::vector<std::vector<double>> Av = matrix_mult(
-      {eigenvector}, matrix_mult(matrix, transpose_matrix({eigenvector})));
-  for (std::vector<double> row : Av) {
-    for (double ele : row) {
-      std::cout << ele << "  ";
-    }
-    std::cout << std::endl;
-  }
   return matrix_mult(
-      {eigenvector},
-      matrix_mult(matrix, transpose_matrix({eigenvector})))[0][0];
+             {eigenvector},
+             matrix_mult(matrix, transpose_matrix({eigenvector})))[0][0] /
+         vTv;
 }
 inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
@@ -262,12 +254,6 @@ PCA(std::vector<std::vector<double>> dataset,
     }
   }
 
-  for (std::vector<double> row : centered_data) {
-    for (double ele : row) {
-      std::cout << ele << "  ";
-    }
-    std::cout << std::endl;
-  }
   // flipped transpose operation because of centering strat
   std::vector<std::vector<double>> covariance_matrix =
       matrix_mult(centered_data, transpose_matrix(centered_data));
@@ -288,11 +274,16 @@ PCA(std::vector<std::vector<double>> dataset,
     std::vector<double> guess(covariance_matrix.size(), 1);
     for (int i = 0; i < 10; i++) {
       guess = power_iteration(covariance_matrix, {guess});
-      std::cout << guess[0] << " " << guess[1] << std::endl;
     }
     principle_components.push_back(guess);
-    // deflate data eventually
-    std::cout << (eigenvalue(covariance_matrix, guess));
+    double eigenval = eigenvalue(covariance_matrix, guess);
+    std::vector<std::vector<double>> subMatrix =
+        matrix_mult(transpose_matrix({guess}), {guess});
+    for (int j = 0; j < covariance_matrix.size(); j++) {
+      for (int k = 0; k < covariance_matrix.size(); k++) {
+        covariance_matrix[j][k] -= subMatrix[j][k] * eigenval;
+      }
+    }
   }
 
   return principle_components;
