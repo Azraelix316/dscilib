@@ -221,6 +221,25 @@ matrix_mult(const std::vector<std::vector<double>> &m1,
   }
   return newMatrix;
 }
+
+inline std::vector<double>
+matrix_vec_mult(const std::vector<std::vector<double>> &m1,
+                const std::vector<double> &m2) {
+  size_t n = m1[0].size();
+  size_t m = m1.size();
+  std::vector<double> newVector(m, 0.0);
+  if (m1[0].size() != m2.size()) {
+    throw std::invalid_argument(
+        "Incompatible matrix dimensions: the columns of matrix 1 are not equal "
+        "to the rows of matrix 2");
+  }
+  for (int i = 0; i < m; i++) {
+    for (int k = 0; k < n; k++) {
+      newVector[i] += m1[i][k] * m2[k];
+    }
+  }
+  return newVector;
+}
 inline double L2_Norm(const std::vector<double> &vector) {
   double norm = 0;
   for (const double &element : vector) {
@@ -231,8 +250,7 @@ inline double L2_Norm(const std::vector<double> &vector) {
 inline std::vector<double>
 power_iteration(const std::vector<std::vector<double>> &matrix,
                 const std::vector<double> &guess) {
-  std::vector<double> newGuess =
-      transpose_matrix(matrix_mult(matrix, transpose_matrix({guess})))[0];
+  std::vector<double> newGuess = matrix_vec_mult(matrix, guess);
   double inverseNorm = 1.0 / L2_Norm(newGuess);
   for (int i = 0; i < newGuess.size(); i++) {
     newGuess[i] *= inverseNorm;
@@ -249,6 +267,65 @@ inline double eigenvalue(const std::vector<std::vector<double>> &matrix,
              matrix_mult(matrix, transpose_matrix({eigenvector})))[0][0] /
          vTv;
 }
+
+inline double new_eigenvalue(const std::vector<std::vector<double>> &matrix,
+                             const std::vector<double> &eigenvector) {
+  double vTv = matrix_vec_mult({eigenvector}, eigenvector)[0];
+  return matrix_vec_mult({eigenvector},
+                         matrix_vec_mult(matrix, eigenvector))[0] /
+         vTv;
+}
+
+inline std::vector<std::vector<double>>
+NEW_PCA(const std::vector<std::vector<double>> &dataset,
+        const double &n_principle_components) {
+  // Center data
+  std::vector<std::vector<double>> centered_data = transpose_matrix(dataset);
+  for (int i = 0; i < centered_data.size(); i++) {
+    double mean = 0.0;
+    for (int j = 0; j < centered_data[i].size(); j++) {
+      mean += centered_data[i][j] / centered_data[i].size();
+    }
+    for (int j = 0; j < centered_data[i].size(); j++) {
+      centered_data[i][j] -= mean;
+    }
+  }
+  double factor = 1.0 / centered_data[0].size() - 1;
+  // flipped transpose operation because of centering strat
+  std::vector<std::vector<double>> covariance_matrix =
+      matrix_mult(centered_data, transpose_matrix(centered_data));
+  for (int i = 0; i < covariance_matrix.size(); i++) {
+    for (int j = 0; j < covariance_matrix.size(); j++) {
+      covariance_matrix[i][j] *= factor;
+    }
+  }
+
+  // Calculate the covariance matrix
+  /*
+   *Search for greatest eigenvalues to get greatest eigenvectors of the matrix
+   * dataset transpose* dataset
+   * Each eigenvalue corresponds to one principle component
+   */
+  std::vector<std::vector<double>> principle_components;
+  for (int i = 0; i < n_principle_components; i++) {
+    std::vector<double> guess(covariance_matrix.size(), 1);
+    for (int i = 0; i < 10; i++) {
+      guess = power_iteration(covariance_matrix, {guess});
+    }
+    principle_components.push_back(guess);
+    double eigenval = new_eigenvalue(covariance_matrix, guess);
+    std::vector<std::vector<double>> subMatrix =
+        matrix_mult(transpose_matrix({guess}), {guess});
+    for (int j = 0; j < covariance_matrix.size(); j++) {
+      for (int k = 0; k < covariance_matrix.size(); k++) {
+        covariance_matrix[j][k] -= subMatrix[j][k] * eigenval;
+      }
+    }
+  }
+
+  return principle_components;
+}
+
 inline std::vector<std::vector<double>>
 PCA(const std::vector<std::vector<double>> &dataset,
     const double &n_principle_components) {
