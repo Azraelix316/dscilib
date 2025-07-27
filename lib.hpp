@@ -285,23 +285,23 @@ inline double new_eigenvalue(const std::vector<std::vector<double>> &matrix,
 }
 
 inline std::vector<std::vector<double>>
-NEW_PCA(const std::vector<std::vector<double>> &dataset,
+NEW_PCA(std::vector<std::vector<double>> dataset,
         const double &n_principle_components) {
   // Center data
-  std::vector<std::vector<double>> centered_data = transpose_matrix(dataset);
-  for (int i = 0; i < centered_data.size(); i++) {
+  for (int i = 0; i < dataset[0].size(); i++) {
     double mean = 0.0;
-    for (int j = 0; j < centered_data[i].size(); j++) {
-      mean += centered_data[i][j] / centered_data[i].size();
+    for (int j = 0; j < dataset.size(); j++) {
+      mean += dataset[j][i];
     }
-    for (int j = 0; j < centered_data[i].size(); j++) {
-      centered_data[i][j] -= mean;
+    mean *= 1.0 / dataset.size();
+    for (int j = 0; j < dataset.size(); j++) {
+      dataset[j][i] -= mean;
     }
   }
-  double factor = 1.0 / centered_data[0].size() - 1;
+  double factor = 1.0 / dataset.size() - 1;
   // flipped transpose operation because of centering strat
   std::vector<std::vector<double>> covariance_matrix =
-      matrix_mult(centered_data, transpose_matrix(centered_data));
+      matrix_mult(transpose_matrix(dataset), dataset);
   for (int i = 0; i < covariance_matrix.size(); i++) {
     for (int j = 0; j < covariance_matrix.size(); j++) {
       covariance_matrix[i][j] *= factor;
@@ -317,7 +317,7 @@ NEW_PCA(const std::vector<std::vector<double>> &dataset,
   std::vector<std::vector<double>> principle_components;
   for (int i = 0; i < n_principle_components; i++) {
     std::vector<double> guess(covariance_matrix.size(), 1);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < 100; i++) {
       guess = power_iteration(covariance_matrix, {guess});
     }
     principle_components.push_back(guess);
