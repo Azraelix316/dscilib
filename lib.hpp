@@ -240,6 +240,16 @@ matrix_vec_mult(const std::vector<std::vector<double>> &m1,
   }
   return newVector;
 }
+inline double dot_product(const std::vector<double> &v1,
+                          const std::vector<double> &v2) {
+  if (v1.size() != v2.size())
+    throw std::invalid_argument("Vector sizes in dot product do not match.");
+  double sum = 0.0;
+  for (int i = 0; i < v1.size(); i++) {
+    sum += v1[i] * v2[i];
+  }
+  return sum;
+}
 inline double L2_Norm(const std::vector<double> &vector) {
   double norm = 0;
   for (const double &element : vector) {
@@ -270,10 +280,8 @@ inline double eigenvalue(const std::vector<std::vector<double>> &matrix,
 
 inline double new_eigenvalue(const std::vector<std::vector<double>> &matrix,
                              const std::vector<double> &eigenvector) {
-  double vTv = matrix_vec_mult({eigenvector}, eigenvector)[0];
-  return matrix_vec_mult({eigenvector},
-                         matrix_vec_mult(matrix, eigenvector))[0] /
-         vTv;
+  double vTv = dot_product(eigenvector, eigenvector);
+  return dot_product(eigenvector, matrix_vec_mult(matrix, eigenvector)) / vTv;
 }
 
 inline std::vector<std::vector<double>>
