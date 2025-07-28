@@ -33,20 +33,25 @@ double quadratic(double input) {
 }
 int main() {
 
-  std::vector<std::vector<double>> m1{
-      {2.5, 2.4}, {0.5, 0.7}, {2.2, 2.9}, {1.9, 2.2}, {3.1, 3}};
-
+  /*std::vector<std::vector<double>> m1{*/
+  /*    {2.5, 2.4}, {0.5, 0.7}, {2.2, 2.9}, {1.9, 2.2}, {3.1, 3}};*/
+  std::vector<std::vector<double>> m1 = dscilib::read_csv_double("tests3.csv");
   auto start = std::chrono::high_resolution_clock::now();
+  std::vector<double> PC1;
+  std::vector<double> PC1fast;
   for (int i = 0; i < 100000; i++)
-    std::vector<double> PC1 = dscilib::PCA(m1, 2)[0];
+    PC1 = dscilib::PCA(m1, 3)[1];
   auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start);
   std::cout << duration.count() << "  ns" << std::endl;
 
   auto start2 = std::chrono::high_resolution_clock::now();
   for (int i = 0; i < 100000; i++)
-    std::vector<double> PC1fast = dscilib::NEW_PCA(m1, 2)[0];
+    PC1fast = dscilib::NEW_PCA(m1, 3)[1];
   auto duration2 = std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::high_resolution_clock::now() - start2);
   std::cout << duration2.count() << "  ns" << std::endl;
+  std::cout << PC1[0] << "  " << PC1[1] << "  " << PC1[2] << std::endl;
+  std::cout << PC1fast[0] << "  " << PC1fast[1] << "  " << PC1fast[2]
+            << std::endl;
 }
