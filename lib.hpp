@@ -27,7 +27,7 @@ rotate_90_cw(std::vector<std::vector<double>> matrix);
 
 // Inverts a matrix by rotating and reversing rows.
 std::vector<std::vector<double>>
-transpose_matrix(std::vector<std::vector<double>> matrix);
+transpose_matrix(const std::vector<std::vector<double>> &matrix);
 
 // Estimates the partial derivative of a function with respect to a variable.
 template <typename FuncType, typename ArgsType>
@@ -107,7 +107,7 @@ rotate_90_cw(std::vector<std::vector<double>> matrix) {
 }
 
 inline std::vector<std::vector<double>>
-transpose_matrix(std::vector<std::vector<double>> matrix) {
+transpose_matrix(const std::vector<std::vector<double>> &matrix) {
   size_t rows = matrix.size();
   if (rows == 0)
     return {};
@@ -299,7 +299,6 @@ NEW_PCA(std::vector<std::vector<double>> dataset,
     }
   }
   double factor = 1.0 / dataset.size() - 1;
-  // flipped transpose operation because of centering strat
   std::vector<std::vector<double>> covariance_matrix =
       matrix_mult(transpose_matrix(dataset), dataset);
   for (int i = 0; i < covariance_matrix.size(); i++) {
@@ -317,7 +316,7 @@ NEW_PCA(std::vector<std::vector<double>> dataset,
   std::vector<std::vector<double>> principle_components;
   for (int i = 0; i < n_principle_components; i++) {
     std::vector<double> guess(covariance_matrix.size(), 1);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       guess = power_iteration(covariance_matrix, {guess});
     }
     principle_components.push_back(guess);
