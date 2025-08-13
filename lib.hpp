@@ -69,6 +69,10 @@ double L2_Norm(const std::vector<double> &vector);
 std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
                                      const double &n_principle_components);
 
+std::vector<std::vector<double>> SIR_model(double susceptible, double infected,
+                                           double recovered, double beta,
+                                           double gamma, const int &iterations);
+
 // Reads a CSV file into a 2D vector of strings.
 std::vector<std::vector<std::string>> read_csv_string(std::string file_name);
 
@@ -322,7 +326,23 @@ PCA(std::vector<std::vector<double>> dataset,
 
   return principle_components;
 }
-
+inline std::vector<std::vector<double>>
+SIR_model(double susceptible, double infected, double recovered, double beta,
+          double gamma, const int &iterations) {
+  std::vector<std::vector<double>> result;
+  result.reserve(iterations);
+  double N = susceptible + infected + recovered;
+  if (infected <= 0)
+    throw std::invalid_argument("Must have at least 1 person infected");
+  result.reserve(iterations);
+  for (int i = 0; i < iterations; i++) {
+    susceptible += (-beta / N * infected * susceptible);
+    infected += (beta / N * infected * susceptible) - (gamma * infected);
+    recovered += (gamma * infected);
+    result[iterations] = {susceptible, infected, recovered};
+  }
+  return result;
+}
 // Reads a CSV file into a 2D vector of strings.
 inline std::vector<std::vector<std::string>>
 read_csv_string(std::string file_name) {
