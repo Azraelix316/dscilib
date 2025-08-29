@@ -329,17 +329,17 @@ PCA(std::vector<std::vector<double>> dataset,
 inline std::vector<std::vector<double>>
 SIR_model(double susceptible, double infected, double recovered, double beta,
           double gamma, const int &iterations) {
-  std::vector<std::vector<double>> result;
-  result.reserve(iterations);
+  std::vector<std::vector<double>> result(iterations);
   double N = susceptible + infected + recovered;
   if (infected <= 0)
     throw std::invalid_argument("Must have at least 1 person infected");
-  result.reserve(iterations);
   for (int i = 0; i < iterations; i++) {
-    susceptible += (-beta / N * infected * susceptible);
-    infected += (beta / N * infected * susceptible) - (gamma * infected);
-    recovered += (gamma * infected);
-    result[iterations] = {susceptible, infected, recovered};
+    double currS = susceptible;
+    double currI = infected;
+    susceptible += (-beta / N * currI * currS);
+    infected += (beta / N * currI * currS) - (gamma * currI);
+    recovered += (gamma * currI);
+    result[i] = {susceptible, infected, recovered};
   }
   return result;
 }
