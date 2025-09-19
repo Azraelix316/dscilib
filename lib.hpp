@@ -17,13 +17,13 @@ namespace dscilib {
 
 // Calculates sum of squared errors for a given model and dataset.
 template <typename InputType, typename FuncType>
-double sum_squared_error(std::vector<double> &coefficients,
-                         std::vector<InputType> &inputs,
-                         std::vector<double> &outputs, FuncType function);
+double sum_squared_error(const std::vector<double> &coefficients,
+                         const std::vector<InputType> &inputs,
+                         const std::vector<double> &outputs, FuncType function);
 
 // Rotates a matrix 90 degrees clockwise.
 std::vector<std::vector<double>>
-rotate_90_cw(std::vector<std::vector<double>> matrix);
+rotate_90_cw(const std::vector<std::vector<double>> &matrix);
 
 // Inverts a matrix by rotating and reversing rows.
 std::vector<std::vector<double>>
@@ -89,7 +89,7 @@ double MIN_TRAINING_SPEED = 0.001;
 // Wrapper for sum_squared_error to use in optimization routines.
 template <typename CoefficientType, typename InputType, typename OutputType,
           typename FuncType>
-struct SumSquaredErrorWrapper {
+struct sum_squared_error_wrapper {
   std::vector<CoefficientType> coefficients;
   std::vector<InputType> inputs;
   std::vector<OutputType> outputs;
@@ -102,7 +102,7 @@ struct SumSquaredErrorWrapper {
 
 // Rotates a matrix 90 degrees clockwise.
 inline std::vector<std::vector<double>>
-rotate_90_cw(std::vector<std::vector<double>> matrix) {
+rotate_90_cw(const std::vector<std::vector<double>> &matrix) {
   size_t rows = matrix.size();
   if (rows == 0)
     return {};
@@ -139,9 +139,9 @@ inline std::vector<type> batch(std::vector<type> matrix,
 
 // Calculates sum of squared errors for a given model and dataset.
 template <typename InputType, typename FuncType>
-inline double sum_squared_error(std::vector<double> &coefficients,
-                                std::vector<InputType> &inputs,
-                                std::vector<double> &outputs,
+inline double sum_squared_error(const std::vector<double> &coefficients,
+                                const std::vector<InputType> &inputs,
+                                const std::vector<double> &outputs,
                                 FuncType function) {
   long double sum = 0.0;
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -174,7 +174,7 @@ inline void coordinate_descent(std::vector<CoefficientType> &coefficients,
                                FuncType &func) {
   double epsilon = 1e-6;
   for (double &coefficient : coefficients) {
-    detail::SumSquaredErrorWrapper<CoefficientType, InputType, OutputType,
+    detail::sum_squared_error_wrapper<CoefficientType, InputType, OutputType,
                                    FuncType>
         loss_func{coefficients, inputs, outputs, func};
     double gradient = partial_derivative(loss_func, coefficient, coefficients);
@@ -326,11 +326,13 @@ PCA(std::vector<std::vector<double>> dataset,
 
   return principle_components;
 }
+//Simulate a SIR model with discrete time.
+//Returns a vector of length `iterations` where each element is {s,i,r} with idx t
 inline std::vector<std::vector<double>>
 SIR_model(double susceptible, double infected, double recovered, double beta,
           double gamma, const int &iterations) {
   std::vector<std::vector<double>> result(iterations);
-  double N = susceptible + infected + recovered;
+  const double N = susceptible + infected + recovered;
   if (infected <= 0)
     throw std::invalid_argument("Must have at least 1 person infected");
   for (int i = 0; i < iterations; i++) {
