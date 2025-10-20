@@ -356,10 +356,10 @@ inline std::vector<std::vector<double>> read_csv_double(std::string file_name) {
   while (getline(fin, line, '\n')) {
     std::stringstream s(line);
     while (getline(s, col, ',')) {
-      if (!col.empty()) {
-        curr.push_back(stod(col));
-      } else {
-        curr.push_back(0);
+      try {
+        curr.push_back(std::stod(col));
+      } catch (const std::invalid_argument &e) {
+        curr.push_back(0.0);
       }
     }
     data.push_back(curr);
