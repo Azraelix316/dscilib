@@ -65,7 +65,12 @@ double dot_product(const std::vector<double> &v1,
                    const std::vector<double> &v2);
 
 double L2_Norm(const std::vector<double> &vector);
+
 // Finds principle components of a 2D dataset
+std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
+                                     const double &n_principle_components,
+                                     const double &n_iterations);
+
 std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
                                      const double &n_principle_components);
 
@@ -276,7 +281,7 @@ inline double eigenvalue(const std::vector<std::vector<double>> &matrix,
 
 inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
-    const double &n_principle_components) {
+    const double &n_principle_components, const double &n_iterations) {
   // Center data
   for (int i = 0; i < dataset[0].size(); i++) {
     double mean = 0.0;
@@ -306,7 +311,7 @@ PCA(std::vector<std::vector<double>> dataset,
   std::vector<std::vector<double>> principle_components;
   for (int i = 0; i < n_principle_components; i++) {
     std::vector<double> guess(covariance_matrix.size(), 1);
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < n_iterations; i++) {
       guess = power_iteration(covariance_matrix, {guess});
     }
     principle_components.push_back(guess);
@@ -321,6 +326,13 @@ PCA(std::vector<std::vector<double>> dataset,
   }
 
   return principle_components;
+}
+
+// Returns n principle components of a dataset, does power iteration 100 times
+inline std::vector<std::vector<double>>
+PCA(std::vector<std::vector<double>> dataset,
+    const double &n_principle_components) {
+  return PCA(dataset, n_principle_components, 100);
 }
 
 // Reads a CSV file into a 2D vector of strings.
