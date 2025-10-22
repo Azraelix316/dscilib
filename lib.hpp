@@ -57,7 +57,7 @@ template <typename CoefficientType, typename InputType, typename OutputType,
 void coordinate_descent(std::vector<CoefficientType> &coefficients,
                         std::vector<InputType> &inputs,
                         std::vector<OutputType> &outputs, FuncType &func,
-                        double tol = 1e-6);
+                        double tolerance = 0.5);
 
 // Finds a root using Newton's method for a single variable.
 template <typename FuncType>
@@ -193,7 +193,7 @@ inline double sum_squared_error(std::vector<double> &coefficients,
                                 FuncType function) {
   long double sum = 0.0;
   for (size_t i = 0; i < inputs.size(); ++i) {
-    double pred = function(inputs[i], coefficients);
+    double pred = function(coefficients, inputs[i]);
     double diff = pred - outputs[i];
     sum += diff * diff;
   }
