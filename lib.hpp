@@ -42,12 +42,22 @@ template <typename FuncType, typename ArgsType>
 double central_finite_difference(FuncType function, double &wrt,
                                  ArgsType &args);
 
-// Performs coordinate descent optimization on coefficients.
+// Performs coordinate descent optimization on coefficients for a single
+// iteration.
+template <typename CoefficientType, typename InputType, typename OutputType,
+          typename FuncType>
+void coordinate_descent_iter(std::vector<CoefficientType> &coefficients,
+                             std::vector<InputType> &inputs,
+                             std::vector<OutputType> &outputs, FuncType &func);
+
+// Performs coordinate descent optimization on coefficients for multiple
+// iterations until tolerance is met.
 template <typename CoefficientType, typename InputType, typename OutputType,
           typename FuncType>
 void coordinate_descent(std::vector<CoefficientType> &coefficients,
                         std::vector<InputType> &inputs,
-                        std::vector<OutputType> &outputs, FuncType &func);
+                        std::vector<OutputType> &outputs, FuncType &func,
+                        double tol = 1e-6);
 
 // Finds a root using Newton's method for a single variable.
 template <typename FuncType>
@@ -108,7 +118,11 @@ struct SumSquaredErrorWrapper {
     return sum_squared_error(coeffs, inputs, outputs, function);
   }
 };
-
+inline void printVec(std::vector<double> vec) {
+  for (const auto &ele : vec) {
+    std::cout << ele << "  ";
+  }
+}
 inline void printArr(std::vector<std::vector<double>> arr) {
   for (const auto &row : arr) {
     for (const auto &ele : row) {
@@ -202,10 +216,10 @@ inline double central_finite_difference(FuncType function, double &wrt,
 // Performs coordinate descent optimization on coefficients.
 template <typename CoefficientType, typename InputType, typename OutputType,
           typename FuncType>
-inline void coordinate_descent(std::vector<CoefficientType> &coefficients,
-                               std::vector<InputType> &inputs,
-                               std::vector<OutputType> &outputs,
-                               FuncType &func) {
+inline void coordinate_descent_iter(std::vector<CoefficientType> &coefficients,
+                                    std::vector<InputType> &inputs,
+                                    std::vector<OutputType> &outputs,
+                                    FuncType &func) {
   double epsilon = 1e-6;
   for (double &coefficient : coefficients) {
     detail::SumSquaredErrorWrapper<CoefficientType, InputType, OutputType,
@@ -227,6 +241,19 @@ inline void coordinate_descent(std::vector<CoefficientType> &coefficients,
     }
   }
 }
+
+template <typename CoefficientType, typename InputType, typename OutputType,
+          typename FuncType>
+void coordinate_descent(std::vector<CoefficientType> &coefficients,
+                        std::vector<InputType> &inputs,
+                        std::vector<OutputType> &outputs, FuncType &func,
+                        double tolerance) {
+  double error = sum_squared_error(coefficients, inputs, outputs, func);
+  while (error > tolerance) {
+    coordinate_descent_iter(coefficients, inputs, outputs, func);
+    error = sum_squared_error(coefficients, inputs, outputs, func);
+  }
+};
 
 // Finds a root using Newton's method for a single variable.
 template <typename FuncType>
