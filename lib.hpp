@@ -23,11 +23,19 @@ double sum_squared_error(std::vector<double> &coefficients,
 
 // Rotates a matrix 90 degrees clockwise.
 std::vector<std::vector<double>>
-rotate_90_cw(std::vector<std::vector<double>> matrix);
+to_90_cw_rotated(std::vector<std::vector<double>> matrix);
 
-// Inverts a matrix by rotating and reversing rows.
+// Rotates a matrix in place
+void rotate_90_cw(std::vector<std::vector<double>> matrix);
+
+// Inverts a matrix by rotating and reversing rows. Returns the tranposed
+// matrix.
 std::vector<std::vector<double>>
-transpose_matrix(const std::vector<std::vector<double>> &matrix);
+to_transposed(const std::vector<std::vector<double>> &matrix);
+
+// Inverts a matrix by rotating and reversing rows. Transposes and mutates the
+// input matrix in-place;
+void transpose(std::vector<std::vector<double>> &matrix);
 
 // Estimates the partial derivative of a function with respect to a variable.
 template <typename FuncType, typename ArgsType>
@@ -99,11 +107,21 @@ struct SumSquaredErrorWrapper {
     return sum_squared_error(coeffs, inputs, outputs, function);
   }
 };
+
+inline void printArr(std::vector<std::vector<double>> arr) {
+  for (const auto &row : arr) {
+    for (const auto &ele : row) {
+      std::cout << ele << "  ";
+    }
+    std::cout << std::endl;
+  }
+}
+
 } // namespace detail
 
 // Rotates a matrix 90 degrees clockwise.
 inline std::vector<std::vector<double>>
-rotate_90_cw(std::vector<std::vector<double>> matrix) {
+to_90_cw_rotated(std::vector<std::vector<double>> matrix) {
   size_t rows = matrix.size();
   if (rows == 0)
     return {};
@@ -117,8 +135,16 @@ rotate_90_cw(std::vector<std::vector<double>> matrix) {
   return rotated;
 }
 
+inline void rotate_90_cw(std::vector<std::vector<double>> matrix) {
+  std::vector<std::vector<double>> temp = to_90_cw_rotated(matrix);
+  matrix = std::move(temp);
+  temp.clear();
+}
+
+// Inverts a matrix by rotating and reversing rows. Returns the tranposed
+// matrix.
 inline std::vector<std::vector<double>>
-transpose_matrix(const std::vector<std::vector<double>> &matrix) {
+to_transposed(const std::vector<std::vector<double>> &matrix) {
   std::vector<std::vector<double>> tranposed_matrix(
       matrix[0].size(), std::vector<double>(matrix.size()));
 #pragma omp parallel for
@@ -126,6 +152,12 @@ transpose_matrix(const std::vector<std::vector<double>> &matrix) {
     for (size_t j = 0; j < matrix[0].size(); ++j)
       tranposed_matrix[j][i] = matrix[i][j];
   return tranposed_matrix;
+}
+
+inline void transpose(std::vector<std::vector<double>> &matrix) {
+  std::vector<std::vector<double>> temp = to_transposed(matrix);
+  matrix = std::move(temp);
+  temp.clear();
 }
 
 template <typename type>
@@ -245,6 +277,7 @@ matrix_vec_mult(const std::vector<std::vector<double>> &m1,
   }
   return newVector;
 }
+
 inline double dot_product(const std::vector<double> &v1,
                           const std::vector<double> &v2) {
   if (v1.size() != v2.size())
@@ -295,7 +328,7 @@ PCA(std::vector<std::vector<double>> dataset,
   }
   double factor = 1.0 / dataset.size() - 1;
   std::vector<std::vector<double>> covariance_matrix =
-      matrix_mult(transpose_matrix(dataset), dataset);
+      matrix_mult(to_transposed(dataset), dataset);
   for (int i = 0; i < covariance_matrix.size(); i++) {
     for (int j = 0; j < covariance_matrix.size(); j++) {
       covariance_matrix[i][j] *= factor;
@@ -317,7 +350,7 @@ PCA(std::vector<std::vector<double>> dataset,
     principle_components.push_back(guess);
     double eigenval = eigenvalue(covariance_matrix, guess);
     std::vector<std::vector<double>> subMatrix =
-        matrix_mult(transpose_matrix({guess}), {guess});
+        matrix_mult(to_transposed({guess}), {guess});
     for (int j = 0; j < covariance_matrix.size(); j++) {
       for (int k = 0; k < covariance_matrix.size(); k++) {
         covariance_matrix[j][k] -= subMatrix[j][k] * eigenval;
