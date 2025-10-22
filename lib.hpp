@@ -39,7 +39,8 @@ void transpose(std::vector<std::vector<double>> &matrix);
 
 // Estimates the partial derivative of a function with respect to a variable.
 template <typename FuncType, typename ArgsType>
-double partial_derivative(FuncType function, double &wrt, ArgsType &args);
+double central_finite_difference(FuncType function, double &wrt,
+                                 ArgsType &args);
 
 // Performs coordinate descent optimization on coefficients.
 template <typename CoefficientType, typename InputType, typename OutputType,
@@ -187,8 +188,8 @@ inline double sum_squared_error(std::vector<double> &coefficients,
 
 // Estimates the partial derivative of a function with respect to a variable.
 template <typename FuncType, typename ArgsType>
-inline double partial_derivative(FuncType function, double &wrt,
-                                 ArgsType &args) {
+inline double central_finite_difference(FuncType function, double &wrt,
+                                        ArgsType &args) {
   constexpr double epsilon = 1e-6;
   wrt += epsilon;
   double loss_plus = function(args);
@@ -210,7 +211,8 @@ inline void coordinate_descent(std::vector<CoefficientType> &coefficients,
     detail::SumSquaredErrorWrapper<CoefficientType, InputType, OutputType,
                                    FuncType>
         loss_func{coefficients, inputs, outputs, func};
-    double gradient = partial_derivative(loss_func, coefficient, coefficients);
+    double gradient =
+        central_finite_difference(loss_func, coefficient, coefficients);
     double speed = detail::MAX_TRAINING_SPEED;
     double base_loss = sum_squared_error(coefficients, inputs, outputs, func);
     double old_coefficient = coefficient;
@@ -229,7 +231,8 @@ inline void coordinate_descent(std::vector<CoefficientType> &coefficients,
 // Finds a root using Newton's method for a single variable.
 template <typename FuncType>
 inline double newton_root(double &input, FuncType function) {
-  double derivative_estimate = partial_derivative(function, input, input);
+  double derivative_estimate =
+      central_finite_difference(function, input, input);
   double x_1 = input;
   double y_1 = function(input);
   double root = (derivative_estimate * x_1 - y_1) / derivative_estimate;
