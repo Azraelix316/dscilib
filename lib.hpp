@@ -67,6 +67,16 @@ void coordinate_descent(std::vector<CoefficientType> &coefficients,
 template <typename FuncType>
 double newton_root(double &input, FuncType function);
 
+std::vector<std::vector<double>> identity_matrix(const int &size);
+
+std::vector<std::vector<double>>
+matrix_scalar_mult(const std::vector<std::vector<double>> &matrix,
+                   const double &scalar);
+
+std::vector<std::vector<double>>
+add_matrices(const std::vector<std::vector<double>> &m1,
+             const std::vector<std::vector<double>> &m2);
+
 // multiplies an mxn matrix and a nxp matrix.
 std::vector<std::vector<double>>
 matrix_mult(const std::vector<std::vector<double>> &m1,
@@ -277,6 +287,42 @@ inline double newton_root(double &input, FuncType function) {
   input = root;
   return input;
 }
+
+inline std::vector<std::vector<double>> identity_matrix(const int &size) {
+  std::vector<std::vector<double>> I(size, std::vector<double>(size, 0.0));
+  for (int i = 0; i < size; ++i)
+    I[i][i] = 1.0;
+  return I;
+}
+
+inline std::vector<std::vector<double>>
+add_matrices(const std::vector<std::vector<double>> &m1,
+             const std::vector<std::vector<double>> &m2) {
+  int n = m1.size(), m = m1[0].size();
+  if (n != m2.size() || m != m2[0].size()) {
+    throw new std::invalid_argument(
+        "Dimensions of input matrices do not match");
+  }
+  std::vector<std::vector<double>> R(m, std::vector<double>(n));
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      R[i][j] = m1[i][j] + m2[i][j];
+    }
+  }
+  return R;
+}
+
+inline std::vector<std::vector<double>>
+matrix_scalar_mult(const std::vector<std::vector<double>> &matrix,
+                   const double &scalar) {
+  int n = matrix.size(), m = matrix[0].size();
+  std::vector<std::vector<double>> R(n, std::vector<double>(m));
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < m; ++j)
+      R[i][j] = matrix[i][j] * scalar;
+  return R;
+}
+
 inline std::vector<std::vector<double>>
 matrix_mult(const std::vector<std::vector<double>> &m1,
             const std::vector<std::vector<double>> &m2) {
