@@ -42,6 +42,10 @@ template <typename FuncType, typename ArgsType>
 double central_finite_difference(FuncType function, double &wrt,
                                  ArgsType &args);
 
+// Performs forward iteration on a differential equation
+template <typename ArgsType, typename FuncType>
+ArgsType RK4(ArgsType, FuncType);
+
 // Performs coordinate descent optimization on coefficients for a single
 // iteration.
 template <typename CoefficientType, typename InputType, typename OutputType,
@@ -211,6 +215,13 @@ inline double central_finite_difference(FuncType function, double &wrt,
   double loss_minus = function(args);
   wrt += epsilon;
   return (loss_plus - loss_minus) / (2.0 * epsilon);
+}
+
+template <typename FuncType> inline double RK4(double args, FuncType func) {
+  double k1 = central_finite_difference(func, args, args);
+  double k2 = central_finite_difference(func, args + k1 / 2.0, args + k1 / 2.0);
+  double k3 = central_finite_difference(func, args + k2 / 2.0, args + k2 / 2.0);
+  double k4 = central_finite_difference(func, args, args);
 }
 
 // Performs coordinate descent optimization on coefficients.
