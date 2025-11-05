@@ -175,7 +175,7 @@ inline void coordinate_descent(std::vector<CoefficientType> &coefficients,
   double epsilon = 1e-6;
   for (double &coefficient : coefficients) {
     detail::sum_squared_error_wrapper<CoefficientType, InputType, OutputType,
-                                   FuncType>
+                                      FuncType>
         loss_func{coefficients, inputs, outputs, func};
     double gradient = partial_derivative(loss_func, coefficient, coefficients);
     double speed = detail::MAX_TRAINING_SPEED;
@@ -326,8 +326,9 @@ PCA(std::vector<std::vector<double>> dataset,
 
   return principle_components;
 }
-//Simulate a SIR model with discrete time.
-//Returns a vector of length `iterations` where each element is {s,i,r} with idx t
+// Simulate a SIR model with discrete time.
+// Returns a vector of length `iterations` where each element is {s,i,r} with
+// idx t
 inline std::vector<std::vector<double>>
 SIR_model(double susceptible, double infected, double recovered, double beta,
           double gamma, const int &iterations) {
