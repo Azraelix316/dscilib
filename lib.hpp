@@ -43,8 +43,8 @@ double central_finite_difference(FuncType function, double &wrt,
                                  ArgsType &args);
 
 // Performs forward iteration on a differential equation
-template <typename ArgsType, typename FuncType>
-ArgsType RK4(ArgsType, FuncType);
+/*template <typename ArgsType, typename FuncType>*/
+/*ArgsType RK4(ArgsType, FuncType);*/
 
 // Performs coordinate descent optimization on coefficients for a single
 // iteration.
@@ -107,6 +107,11 @@ std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
 std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
                                      const double &n_principle_components);
 
+template <typename InputType, typename FuncType>
+double R_squared(std::vector<double> &coefficients,
+                 std::vector<InputType> &inputs, std::vector<double> &outputs,
+                 FuncType function);
+
 // Reads a CSV file into a 2D vector of strings.
 std::vector<std::vector<std::string>> read_csv_string(std::string file_name);
 
@@ -117,8 +122,8 @@ std::vector<std::vector<double>> read_csv_double(std::string file_name);
 namespace detail {
 // Up max training speed when working with large coefficients
 // Lower min training speed for precision
-double MAX_TRAINING_SPEED = 100.0;
-double MIN_TRAINING_SPEED = 0.001;
+double MAX_TRAINING_SPEED = 1e-15;
+double MIN_TRAINING_SPEED = 1e-27;
 
 // Wrapper for sum_squared_error to use in optimization routines.
 template <typename CoefficientType, typename InputType, typename OutputType,
@@ -145,7 +150,9 @@ inline void printArr(std::vector<std::vector<double>> arr) {
     std::cout << std::endl;
   }
 }
-
+inline double average(std::vector<double> mean, double inputsFake) {
+  return mean[0] - inputsFake;
+}
 } // namespace detail
 
 // Rotates a matrix 90 degrees clockwise.
@@ -227,12 +234,14 @@ inline double central_finite_difference(FuncType function, double &wrt,
   return (loss_plus - loss_minus) / (2.0 * epsilon);
 }
 
-template <typename FuncType> inline double RK4(double args, FuncType func) {
-  double k1 = central_finite_difference(func, args, args);
-  double k2 = central_finite_difference(func, args + k1 / 2.0, args + k1 / 2.0);
-  double k3 = central_finite_difference(func, args + k2 / 2.0, args + k2 / 2.0);
-  double k4 = central_finite_difference(func, args, args);
-}
+/*template <typename FuncType> inline double RK4(double args, FuncType func) {*/
+/*  double k1 = central_finite_difference(func, args, args);*/
+/*  double k2 = central_finite_difference(func, args + k1 / 2.0, args + k1
+ * / 2.0);*/
+/*  double k3 = central_finite_difference(func, args + k2 / 2.0, args + k2
+ * / 2.0);*/
+/*  double k4 = central_finite_difference(func, args, args);*/
+/*}*/
 
 // Performs coordinate descent optimization on coefficients.
 template <typename CoefficientType, typename InputType, typename OutputType,
@@ -453,6 +462,23 @@ inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
     const double &n_principle_components) {
   return PCA(dataset, n_principle_components, 100);
+}
+
+template <typename InputType, typename FuncType>
+inline double R_squared(std::vector<double> &coefficients,
+                        std::vector<InputType> &inputs,
+                        std::vector<double> &outputs, FuncType function) {
+  double unexplained_sum_of_squares =
+      sum_squared_error(coefficients, inputs, outputs, function);
+  double mean = 0;
+  for (double output : outputs) {
+    mean += output / outputs.size();
+  }
+  double total_sum_of_squares = 0;
+  for (double output : outputs) {
+    total_sum_of_squares += (output - mean) * (output - mean);
+  }
+  return 1.0 - (unexplained_sum_of_squares / total_sum_of_squares);
 }
 
 // Reads a CSV file into a 2D vector of strings.

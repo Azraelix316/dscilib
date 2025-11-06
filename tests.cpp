@@ -1,38 +1,80 @@
 #include "lib.hpp"
-#include <chrono>
-#include <iostream>
-#include <numeric>
-#include <ostream>
-#include <vector>
+#include <algorithm>
+#include <cmath>
+#include <cstdlib>
+#include <ctime>
+std::vector<double> SIR_model_recursive(double susceptible, double infected,
+                                        double recovered, double beta,
+                                        double gamma, double reSus,
+                                        const int &iterations) {
+  std::vector<double> result(iterations);
+  const double N = susceptible + infected + recovered;
+  for (int i = 0; i < iterations; i++) {
+    double currS = susceptible;
+    double currI = infected;
+    susceptible += (-beta / N * currI * currS);
+    infected += (beta / N * currI * currS) - (gamma * currI);
+    susceptible += reSus * recovered;
+    recovered += (gamma * currI) - (reSus * recovered);
+    result[i] = {infected};
+  }
+  return result;
+}
+double SIR_wrapper(std::vector<double> coefficients, double inputs) {
+  return SIR_model_recursive(coefficients[0], coefficients[1], coefficients[2],
+                             coefficients[3], coefficients[4], coefficients[5],
+                             inputs + 1)[inputs];
+}
 int main() {
-  std::vector<std::vector<double>> transition_matrix;
-  std::vector<double> state = {50, 50, 0};
-  std::vector<double> capacity = {30, 20, 50};
-  double alpha = 0.5;
-  int n = capacity.size();
-  std::vector<double> vec(n);
-  std::vector<std::vector<double>> ones;
-  for (int i = 0; i < n; i++) {
-    ones.push_back({1});
-  }
-  // Step 1: normalize capacity to get π
-  double sum = std::accumulate(capacity.begin(), capacity.end(), 0.0);
-  std::vector<std::vector<double>> pi;
-  for (int i = 0; i < n; ++i)
-    capacity[i] = capacity[i] / sum;
-  pi.push_back(capacity);
-  auto I = dscilib::identity_matrix(n);
-  dscilib::transpose(pi);
-  dscilib::transpose(ones);
-  std::vector<std::vector<double>> input1 =
-      dscilib::matrix_scalar_mult(I, alpha);
-  std::vector<std::vector<double>> input2 =
-      dscilib::matrix_scalar_mult(dscilib::matrix_mult(pi, ones), 1 - alpha);
-  transition_matrix = dscilib::add_matrices(input1, input2);
-  dscilib::detail::printArr(pi);
-  dscilib::detail::printArr(transition_matrix);
+  srand(time(NULL));
+  std::vector<double> coefficients = {1570, 1, 0, 1.821, 1.2, 0.115};
+  std::vector<std::vector<double>> data = dscilib::read_csv_double("data.csv");
+  dscilib::transpose(data);
+  std::cout << "transposed." << std::endl;
+  std::vector<double> bestCoefficients = coefficients;
+  double best =
+      dscilib::sum_squared_error(coefficients, data[0], data[1], SIR_wrapper);
   for (int i = 0; i < 100; i++) {
-    state = dscilib::matrix_vec_mult(transition_matrix, state);
-    dscilib::detail::printVec(state);
+    dscilib::coordinate_descent_iter(coefficients, data[0], data[1],
+                                     SIR_wrapper);
   }
+  best =
+      dscilib::sum_squared_error(coefficients, data[0], data[1], SIR_wrapper);
+  /*for (int i = 0; i < 10000000; i++) {*/
+  /*  coefficients = {(double)rand() / RAND_MAX * 2000,*/
+  /*                  1,*/
+  /*                  0,*/
+  /*                  (double)rand() / RAND_MAX * 5,*/
+  /*                  (double)rand() / RAND_MAX * 5,*/
+  /*                  (double)rand() / RAND_MAX * 5};*/
+  /*  if (best > dscilib::sum_squared_error(coefficients, data[0], data[1],*/
+  /*                                        SIR_wrapper)) {*/
+  /*    best = dscilib::sum_squared_error(coefficients, data[0], data[1],*/
+  /*                                      SIR_wrapper);*/
+  /*    bestCoefficients = coefficients;*/
+  /*    std::cout << best << " error, iterations: " << i << std::endl;*/
+  /*    dscilib::detail::printVec(bestCoefficients);*/
+  /*    std::cout << std::endl;*/
+  /*  }*/
+  /*}*/
+  bestCoefficients = coefficients;
+  dscilib::detail::printVec(bestCoefficients);
+  std::cout << std::endl << best << std::endl;
+  for (int i = 0; i < data[0].size(); i++) {
+    std::cout << SIR_wrapper(bestCoefficients, i) << "  " << data[1][i] << "  "
+              << pow((SIR_wrapper(bestCoefficients, i) - data[1][i]), 2)
+              << std::endl;
+  }
+  std::cout << dscilib::R_squared(coefficients, data[0], data[1], SIR_wrapper);
+  /*for (int i = 0; i < 1; i++) {*/
+  /*  dscilib::coordinate_descent_iter(coefficients, data[0], data[1],*/
+  /*                                   SIR_wrapper);*/
+  /*}*/
+  std::fstream fout;
+  fout.open("results.csv", std::ios::out);
+  for (int i = 0; i < data[0].size(); i++) {
+    fout << SIR_wrapper(bestCoefficients, i) << std::endl;
+  }
+
+  std::cout << "Printed";
 }
