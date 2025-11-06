@@ -1,6 +1,6 @@
 # DSCILib: A lightweight data science library
 A lightweight data science library, made for the MCM and HiMCM competitions for new programmers.
-Simple, made to be adaptable to all kinds of situations.
+Simple, made to be adaptable to all kinds of situations. 
 
 **Currently a work in progress**
 
@@ -14,4 +14,13 @@ Regardless of what kind of predictive algorithms you're using, all the optimizat
 
 #### Data Processing
 Includes functions to read data from a csv in string/double format, and rotation/inversion of 2D matrices.
+- includes PCA as well, to reduce the number of dimensions
+
+---
+
+#### Models
+- SIR_model currently inbuilt
+
+#### Evaluation
+- R^2 calculation built in
 

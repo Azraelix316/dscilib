@@ -17,9 +17,9 @@ namespace dscilib {
 
 // Calculates sum of squared errors for a given model and dataset.
 template <typename InputType, typename FuncType>
-double sum_squared_error(std::vector<double> &coefficients,
-                         std::vector<InputType> &inputs,
-                         std::vector<double> &outputs, FuncType function);
+double sum_squared_error(const std::vector<double> &coefficients,
+                         const std::vector<InputType> &inputs,
+                         const std::vector<double> &outputs, FuncType function);
 
 // Rotates a matrix 90 degrees clockwise.
 std::vector<std::vector<double>>
@@ -112,6 +112,10 @@ double R_squared(std::vector<double> &coefficients,
                  std::vector<InputType> &inputs, std::vector<double> &outputs,
                  FuncType function);
 
+std::vector<std::vector<double>> SIR_model(double susceptible, double infected,
+                                           double recovered, double beta,
+                                           double gamma, const int &iterations);
+
 // Reads a CSV file into a 2D vector of strings.
 std::vector<std::vector<std::string>> read_csv_string(std::string file_name);
 
@@ -128,7 +132,7 @@ double MIN_TRAINING_SPEED = 1e-27;
 // Wrapper for sum_squared_error to use in optimization routines.
 template <typename CoefficientType, typename InputType, typename OutputType,
           typename FuncType>
-struct SumSquaredErrorWrapper {
+struct sum_squared_error_wrapper {
   std::vector<CoefficientType> coefficients;
   std::vector<InputType> inputs;
   std::vector<OutputType> outputs;
@@ -208,9 +212,9 @@ inline std::vector<type> batch(std::vector<type> matrix,
 
 // Calculates sum of squared errors for a given model and dataset.
 template <typename InputType, typename FuncType>
-inline double sum_squared_error(std::vector<double> &coefficients,
-                                std::vector<InputType> &inputs,
-                                std::vector<double> &outputs,
+inline double sum_squared_error(const std::vector<double> &coefficients,
+                                const std::vector<InputType> &inputs,
+                                const std::vector<double> &outputs,
                                 FuncType function) {
   long double sum = 0.0;
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -252,8 +256,8 @@ inline void coordinate_descent_iter(std::vector<CoefficientType> &coefficients,
                                     FuncType &func) {
   double epsilon = 1e-6;
   for (double &coefficient : coefficients) {
-    detail::SumSquaredErrorWrapper<CoefficientType, InputType, OutputType,
-                                   FuncType>
+    detail::sum_squared_error_wrapper<CoefficientType, InputType, OutputType,
+                                      FuncType>
         loss_func{coefficients, inputs, outputs, func};
     double gradient =
         central_finite_difference(loss_func, coefficient, coefficients);
@@ -479,6 +483,27 @@ inline double R_squared(std::vector<double> &coefficients,
     total_sum_of_squares += (output - mean) * (output - mean);
   }
   return 1.0 - (unexplained_sum_of_squares / total_sum_of_squares);
+}
+
+// Simulate a SIR model with discrete time.
+// Returns a vector of length `iterations` where each element is {s,i,r} with
+// idx t
+inline std::vector<std::vector<double>>
+SIR_model(double susceptible, double infected, double recovered, double beta,
+          double gamma, const int &iterations) {
+  std::vector<std::vector<double>> result(iterations);
+  const double N = susceptible + infected + recovered;
+  if (infected <= 0)
+    throw std::invalid_argument("Must have at least 1 person infected");
+  for (int i = 0; i < iterations; i++) {
+    double currS = susceptible;
+    double currI = infected;
+    susceptible += (-beta / N * currI * currS);
+    infected += (beta / N * currI * currS) - (gamma * currI);
+    recovered += (gamma * currI);
+    result[i] = {susceptible, infected, recovered};
+  }
+  return result;
 }
 
 // Reads a CSV file into a 2D vector of strings.
