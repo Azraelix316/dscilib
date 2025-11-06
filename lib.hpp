@@ -17,9 +17,9 @@ namespace dscilib {
 
 // Calculates sum of squared errors for a given model and dataset.
 template <typename InputType, typename FuncType>
-double sum_squared_error(std::vector<double> &coefficients,
-                         std::vector<InputType> &inputs,
-                         std::vector<double> &outputs, FuncType function);
+double sum_squared_error(const std::vector<double> &coefficients,
+                         const std::vector<InputType> &inputs,
+                         const std::vector<double> &outputs, FuncType function);
 
 // Rotates a matrix 90 degrees clockwise.
 std::vector<std::vector<double>>
@@ -42,6 +42,10 @@ template <typename FuncType, typename ArgsType>
 double central_finite_difference(FuncType function, double &wrt,
                                  ArgsType &args);
 
+// Performs forward iteration on a differential equation
+/*template <typename ArgsType, typename FuncType>*/
+/*ArgsType RK4(ArgsType, FuncType);*/
+
 // Performs coordinate descent optimization on coefficients for a single
 // iteration.
 template <typename CoefficientType, typename InputType, typename OutputType,
@@ -62,6 +66,16 @@ void coordinate_descent(std::vector<CoefficientType> &coefficients,
 // Finds a root using Newton's method for a single variable.
 template <typename FuncType>
 double newton_root(double &input, FuncType function);
+
+std::vector<std::vector<double>> identity_matrix(const int &size);
+
+std::vector<std::vector<double>>
+matrix_scalar_mult(const std::vector<std::vector<double>> &matrix,
+                   const double &scalar);
+
+std::vector<std::vector<double>>
+add_matrices(const std::vector<std::vector<double>> &m1,
+             const std::vector<std::vector<double>> &m2);
 
 // multiplies an mxn matrix and a nxp matrix.
 std::vector<std::vector<double>>
@@ -93,6 +107,15 @@ std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
 std::vector<std::vector<double>> PCA(std::vector<std::vector<double>> dataset,
                                      const double &n_principle_components);
 
+template <typename InputType, typename FuncType>
+double R_squared(std::vector<double> &coefficients,
+                 std::vector<InputType> &inputs, std::vector<double> &outputs,
+                 FuncType function);
+
+std::vector<std::vector<double>> SIR_model(double susceptible, double infected,
+                                           double recovered, double beta,
+                                           double gamma, const int &iterations);
+
 // Reads a CSV file into a 2D vector of strings.
 std::vector<std::vector<std::string>> read_csv_string(std::string file_name);
 
@@ -103,13 +126,13 @@ std::vector<std::vector<double>> read_csv_double(std::string file_name);
 namespace detail {
 // Up max training speed when working with large coefficients
 // Lower min training speed for precision
-double MAX_TRAINING_SPEED = 100.0;
-double MIN_TRAINING_SPEED = 0.001;
+double MAX_TRAINING_SPEED = 1e-15;
+double MIN_TRAINING_SPEED = 1e-27;
 
 // Wrapper for sum_squared_error to use in optimization routines.
 template <typename CoefficientType, typename InputType, typename OutputType,
           typename FuncType>
-struct SumSquaredErrorWrapper {
+struct sum_squared_error_wrapper {
   std::vector<CoefficientType> coefficients;
   std::vector<InputType> inputs;
   std::vector<OutputType> outputs;
@@ -131,7 +154,9 @@ inline void printArr(std::vector<std::vector<double>> arr) {
     std::cout << std::endl;
   }
 }
-
+inline double average(std::vector<double> mean, double inputsFake) {
+  return mean[0] - inputsFake;
+}
 } // namespace detail
 
 // Rotates a matrix 90 degrees clockwise.
@@ -187,9 +212,9 @@ inline std::vector<type> batch(std::vector<type> matrix,
 
 // Calculates sum of squared errors for a given model and dataset.
 template <typename InputType, typename FuncType>
-inline double sum_squared_error(std::vector<double> &coefficients,
-                                std::vector<InputType> &inputs,
-                                std::vector<double> &outputs,
+inline double sum_squared_error(const std::vector<double> &coefficients,
+                                const std::vector<InputType> &inputs,
+                                const std::vector<double> &outputs,
                                 FuncType function) {
   long double sum = 0.0;
   for (size_t i = 0; i < inputs.size(); ++i) {
@@ -213,6 +238,15 @@ inline double central_finite_difference(FuncType function, double &wrt,
   return (loss_plus - loss_minus) / (2.0 * epsilon);
 }
 
+/*template <typename FuncType> inline double RK4(double args, FuncType func) {*/
+/*  double k1 = central_finite_difference(func, args, args);*/
+/*  double k2 = central_finite_difference(func, args + k1 / 2.0, args + k1
+ * / 2.0);*/
+/*  double k3 = central_finite_difference(func, args + k2 / 2.0, args + k2
+ * / 2.0);*/
+/*  double k4 = central_finite_difference(func, args, args);*/
+/*}*/
+
 // Performs coordinate descent optimization on coefficients.
 template <typename CoefficientType, typename InputType, typename OutputType,
           typename FuncType>
@@ -222,8 +256,8 @@ inline void coordinate_descent_iter(std::vector<CoefficientType> &coefficients,
                                     FuncType &func) {
   double epsilon = 1e-6;
   for (double &coefficient : coefficients) {
-    detail::SumSquaredErrorWrapper<CoefficientType, InputType, OutputType,
-                                   FuncType>
+    detail::sum_squared_error_wrapper<CoefficientType, InputType, OutputType,
+                                      FuncType>
         loss_func{coefficients, inputs, outputs, func};
     double gradient =
         central_finite_difference(loss_func, coefficient, coefficients);
@@ -266,6 +300,42 @@ inline double newton_root(double &input, FuncType function) {
   input = root;
   return input;
 }
+
+inline std::vector<std::vector<double>> identity_matrix(const int &size) {
+  std::vector<std::vector<double>> I(size, std::vector<double>(size, 0.0));
+  for (int i = 0; i < size; ++i)
+    I[i][i] = 1.0;
+  return I;
+}
+
+inline std::vector<std::vector<double>>
+add_matrices(const std::vector<std::vector<double>> &m1,
+             const std::vector<std::vector<double>> &m2) {
+  int n = m1.size(), m = m1[0].size();
+  if (n != m2.size() || m != m2[0].size()) {
+    throw new std::invalid_argument(
+        "Dimensions of input matrices do not match");
+  }
+  std::vector<std::vector<double>> R(m, std::vector<double>(n));
+  for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < m; ++j) {
+      R[i][j] = m1[i][j] + m2[i][j];
+    }
+  }
+  return R;
+}
+
+inline std::vector<std::vector<double>>
+matrix_scalar_mult(const std::vector<std::vector<double>> &matrix,
+                   const double &scalar) {
+  int n = matrix.size(), m = matrix[0].size();
+  std::vector<std::vector<double>> R(n, std::vector<double>(m));
+  for (int i = 0; i < n; ++i)
+    for (int j = 0; j < m; ++j)
+      R[i][j] = matrix[i][j] * scalar;
+  return R;
+}
+
 inline std::vector<std::vector<double>>
 matrix_mult(const std::vector<std::vector<double>> &m1,
             const std::vector<std::vector<double>> &m2) {
@@ -396,6 +466,44 @@ inline std::vector<std::vector<double>>
 PCA(std::vector<std::vector<double>> dataset,
     const double &n_principle_components) {
   return PCA(dataset, n_principle_components, 100);
+}
+
+template <typename InputType, typename FuncType>
+inline double R_squared(std::vector<double> &coefficients,
+                        std::vector<InputType> &inputs,
+                        std::vector<double> &outputs, FuncType function) {
+  double unexplained_sum_of_squares =
+      sum_squared_error(coefficients, inputs, outputs, function);
+  double mean = 0;
+  for (double output : outputs) {
+    mean += output / outputs.size();
+  }
+  double total_sum_of_squares = 0;
+  for (double output : outputs) {
+    total_sum_of_squares += (output - mean) * (output - mean);
+  }
+  return 1.0 - (unexplained_sum_of_squares / total_sum_of_squares);
+}
+
+// Simulate a SIR model with discrete time.
+// Returns a vector of length `iterations` where each element is {s,i,r} with
+// idx t
+inline std::vector<std::vector<double>>
+SIR_model(double susceptible, double infected, double recovered, double beta,
+          double gamma, const int &iterations) {
+  std::vector<std::vector<double>> result(iterations);
+  const double N = susceptible + infected + recovered;
+  if (infected <= 0)
+    throw std::invalid_argument("Must have at least 1 person infected");
+  for (int i = 0; i < iterations; i++) {
+    double currS = susceptible;
+    double currI = infected;
+    susceptible += (-beta / N * currI * currS);
+    infected += (beta / N * currI * currS) - (gamma * currI);
+    recovered += (gamma * currI);
+    result[i] = {susceptible, infected, recovered};
+  }
+  return result;
 }
 
 // Reads a CSV file into a 2D vector of strings.
